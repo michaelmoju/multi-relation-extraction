@@ -1,10 +1,6 @@
 # Author: Nishith Khandwala (nishith@stanford.edu)
 # Adapted from https://github.com/hans/ipython-notebooks/
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import numpy as np
 import tensorflow as tf
 import matplotlib

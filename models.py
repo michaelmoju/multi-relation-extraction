@@ -11,7 +11,7 @@ entity_type_n = 7
 relation_type_n = 6
 
 
-def multi_task_model():
+def multi_task_model(train_entity=False):
 	sent_matrix = tf.placeholder(tf.float32, (None, maxSent, w_vec_dim))
 	entity_labels = tf.placeholder(tf.float32, (None, maxSent, entity_type_n))
 	print(entity_labels)
@@ -25,6 +25,9 @@ def multi_task_model():
 	print(predict_entity)
 	entity_loss = -tf.reduce_sum(entity_labels * tf.log(predict_entity), axis=1)
 	print('entityloss:' + str(entity_loss))
+
+	if train_entity:
+		return predict_entity, entity_loss
 	relation_labels = tf.placeholder(tf.float32, (None, relation_type_n))
 	entity_idx_1 = tf.placeholder(tf.int8, (None, None))
 
@@ -34,18 +37,24 @@ def multi_task_model():
 def entity_model(batch_size=125):
 
 	with tf.variable_scope('biLSTM1'):
-		w_vec = tf.placeholder(tf.float32, (None, maxSent, w_vec_dim))
-		w = tf.Variable(np.random.normal(), name='w')
-		y_pred = tf.mul(w, x)
-		w2h_layer = keras.layers.CuDNNLSTM(units=128, return_sequences=True, name='wordvec2h')
-		h0_out = w2h_layer(w_vec)
+		sent_matrix = tf.placeholder(tf.float32, (None, maxSent, w_vec_dim))
+		entity_labels = tf.placeholder(tf.float32, (None, maxSent, entity_type_n))
 
-		prediction = tf.nn.softmax()
-		label = tf.placeholder(tf.float32, [batch_size, r_type_n], name='label')
+		w2h_layer_f = tf.keras.layers.CuDNNLSTM(units=128, return_sequences=True, name='entity_biLSTM_f')
+		w2h_layer_b = tf.keras.layers.CuDNNLSTM(units=128, return_sequences=True, go_backwards=True, name='entity_biLSTM_b')
 
-		loss = -tf.reduce_sum(label * tf.log(prediction), axis=1)
+		dense_layer = tf.keras.layers.Dense(units=entity_type_n, name='entity_dense')
 
-	return loss, h0_out
+		loss = 0
+		for word_vec_f, word_vec_b in w2h_layer_f(sent_matrix), w2h_layer_b(sent_matrix):
+			w2h_out = tf.concat(word_vec_f, word_vec_b)
+			dense_out = dense_layer(w2h_out)
+			entity_type_out = tf.nn.softmax(dense_out)
+			loss += -tf.reduce_sum(entity_labels * tf.log(entity_type_out), axis=1)
+
+		# TODO: return the sequence of labels
+
+	return loss, entity_type_out
 
 
 def run_entity_model():
