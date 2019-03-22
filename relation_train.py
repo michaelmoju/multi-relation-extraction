@@ -1,6 +1,6 @@
 import models
 import random
-import io.io
+import dataIO.io
 
 random.seed(0)
 

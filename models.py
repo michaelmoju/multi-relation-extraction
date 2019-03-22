@@ -46,6 +46,7 @@ def entity_model(batch_size=125):
 		dense_layer = tf.keras.layers.Dense(units=entity_type_n, name='entity_dense')
 
 		loss = 0
+
 		for word_vec_f, word_vec_b in w2h_layer_f(sent_matrix), w2h_layer_b(sent_matrix):
 			w2h_out = tf.concat(word_vec_f, word_vec_b)
 			dense_out = dense_layer(w2h_out)
@@ -60,14 +61,16 @@ def entity_model(batch_size=125):
 def run_entity_model():
 	init = tf.global_variables_initializer()
 
-	w_vec = []
+	tokens = []
 
 	loss, h0_out = entity_model()
 	optimizer = tf.train.AdamOptimizer().minimize(loss)
 
+	feed_dic = {'w_vec': tokens, 'label': []}
+
 	with tf.Session() as sess:
 		sess.run(init)
-		sess.run((loss, h0_out), feed_dict={'w_vec': w_vec, 'label': []})
+		sess.run((loss, h0_out, optimizer), feed_dict=feed_dic)
 
 
 if __name__ == '__main__':

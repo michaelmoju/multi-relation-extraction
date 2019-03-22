@@ -33,6 +33,7 @@ def linear_regression():
         loss = tf.reduce_mean(tf.square(y_pred - y))
     return x, y, y_pred, loss
 
+
 def run():
     x_batch, y_batch = generate_dataset()
 
@@ -56,5 +57,7 @@ def run():
     plt.plot(x_batch, y_pred_batch)
     plt.savefig('plot.png')
 
+
 if __name__ == '__main__':
-	run()
+    run()
+
