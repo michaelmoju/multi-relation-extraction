@@ -4,6 +4,7 @@
 import json
 import random
 import config
+import glob
 
 config = config.define_config()
 
@@ -30,4 +31,15 @@ def load_relation_from_existing_sets(relationMention_ph):
 def get_entity_from_file(fp, entity_id):
 	entity_dic = json.load(fp)
 	return entity_dic[entity_id]
+
+
+def get_entity_from_files(path):
+	entities = {}
+	files = glob.glob(path+'*.entity.json')
+	for file in files:
+		with open(file) as f:
+			entities.update(json.load(f))
+	print(entities.keys())
+
+	return entities
 

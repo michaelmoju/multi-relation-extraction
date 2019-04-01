@@ -9,11 +9,13 @@ import ast
 import word_embeddings
 from dataIO import io
 import config
+from dataIO.annotation import *
 
 config = config.define_config()
 
 module_location = os.path.abspath(__file__)
 module_location = os.path.dirname(module_location)
+
 
 # with open(os.path.join(module_location, "../model_params.json")) as f:
 # 	model_params = json.load(f)
@@ -55,7 +57,7 @@ def relation_to_indices(relations, word2idx):
 
 
 def entity_to_indices(words, word2idx):
-	return NotImplementedError
+	pass
 
 
 def tokens_to_embs(tokens, embeddings, word2idx):
@@ -74,46 +76,53 @@ def get_entity_type_from_id(entityid, entity_dir):
 	print(entityid)
 
 	# TODO: revise this with re
-	docID, eID, mID = entityid.split('-')
+	*docID_ls, eID, mID = entityid.split('-')
+
+	docID = ''
+	for i in docID_ls:
+		docID += i + '-'
+
+	docID = docID[:-1]
+
 	print(docID)
 
-	with open(entity_dir+docID+'.apf.xml.entity.json') as f:
+	with open(entity_dir + docID + '.apf.xml.entity.json') as f:
 		entity_dic = json.load(f)
-		entity_type = entity_dic[docID+'-'+eID]['entityType']
+		entity_type = entity_dic[docID + '-' + eID]['entityType']
 
 	return entity_type
 
 
 def get_entity_idx(r, entity_dir):
 	label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
-				  'B-ORG': 5, 'I-ORG': 6, 'L-ORG': 7, 'U-ORG': 8,
-				  'B-LOC': 9, 'I-LOC':10, 'L-LOC':11, 'U-LOC':12,
-				  'B-GPE':13, 'I-GPE':14, 'L-GPE':15, 'U-GPE':16,
-				  'B-FAC':17, 'I-FAC':18, 'L-FAC':19, 'U-FAC':20,
-				  'B-VEH':21, 'I-VEH':22, 'L-VEH':23, 'U-VEH':24,
-				  'B-WEA':25, 'I-WEA':26, 'L-WEA':27, 'U-WEA':28, 'O':29}
+				 'B-ORG': 5, 'I-ORG': 6, 'L-ORG': 7, 'U-ORG': 8,
+				 'B-LOC': 9, 'I-LOC': 10, 'L-LOC': 11, 'U-LOC': 12,
+				 'B-GPE': 13, 'I-GPE': 14, 'L-GPE': 15, 'U-GPE': 16,
+				 'B-FAC': 17, 'I-FAC': 18, 'L-FAC': 19, 'U-FAC': 20,
+				 'B-VEH': 21, 'I-VEH': 22, 'L-VEH': 23, 'U-VEH': 24,
+				 'B-WEA': 25, 'I-WEA': 26, 'L-WEA': 27, 'U-WEA': 28, 'O': 29}
 
-	out_idx = np.zeros((config.max_sent_len,))
+	mention1_idx = np.zeros((config.max_sent_len,))
+	mention2_idx = np.zeros((config.max_sent_len,))
 
 	for i in range(len(r['Tokens'])):
-		out_idx[i] = label2idx['O']
-
+		mention1_idx[i] = label2idx['O']
+		mention2_idx[i] = label2idx['O']
 	e = r['mentionArg1']
-	for i in range(e['start'], e['end']):
+	for i in range(e['start'], e['end'] + 1):
 		if e['end'] == e['start']:
 			key = 'U'
 		elif i == e['start']:
 			key = 'B'
-		elif i == (e['end']-1):
+		elif i == e['end']:
 			key = 'L'
 		else:
 			key = 'I'
 		key = key + '-' + get_entity_type_from_id(e['argMentionid'], entity_dir)
-		out_idx[i] = label2idx[key]
-
+		mention1_idx[i] = label2idx[key]
 
 	e2 = r['mentionArg2']
-	for i in range(e2['start'], e2['end']):
+	for i in range(e2['start'], e2['end'] + 1):
 		if e2['end'] == e2['start']:
 			key = 'U'
 		elif i == e2['start']:
@@ -123,12 +132,36 @@ def get_entity_idx(r, entity_dir):
 		else:
 			key = 'I'
 		key = key + '-' + get_entity_type_from_id(e2['argMentionid'], entity_dir)
-		out_idx[i] = label2idx[key]
+		mention2_idx[i] = label2idx[key]
 
-	return out_idx
+	return mention1_idx, mention2_idx
 
 
-def get_entity_data(relationMention_fp, word_emb_fp, entity_dir):
+def load_entity_instances(entity_dir):
+	entity_dicts = io.get_entity_from_files(entity_dir)
+	entities = []
+	entity_instances = {}
+	nested_sentence_set = set()
+	for entity_id, entity_dict in entity_dicts.items():
+		entities.append(Entity().set_from_entity_dict(entity_dict))
+
+	print(entities)
+	for entity in entities:
+		rgx = re.compile('(.*)-(E[0-9]+)')
+		docID, _ = rgx.match(entity.id).groups()
+		for mention in entity.mentions:
+			sentenceID = docID + '-' + str(mention.sentence_index)
+			if sentenceID not in entity_instances.keys():
+				entity_instances[sentenceID] = EntityInstance(sentenceID, len(mention.tokens))
+			else:
+				entity_instances[sentenceID].add_mention(mention)
+				if entity_instances[sentenceID].is_nested:
+					print('nested entity mention found in {}'.format(sentenceID))
+					nested_sentence_set.add(sentenceID)
+	return entity_instances, nested_sentence_set
+
+
+def get_entity_data_old(relationMention_fp, word_emb_fp, entity_dir):
 	train_data, val_data, test_data = io.load_relation_from_existing_sets(relationMention_fp)
 	embeddings, word2idx = word_embeddings.load_word_emb(word_emb_fp)
 
@@ -136,25 +169,25 @@ def get_entity_data(relationMention_fp, word_emb_fp, entity_dir):
 	val_word_embs = np.zeros((len(val_data), config.max_sent_len, config.word_emb_dim), dtype='float32')
 	test_word_embs = np.zeros((len(test_data), config.max_sent_len, config.word_emb_dim), dtype='float32')
 
-	train_labels = np.zeros((len(train_data), config.max_sent_len), dtype='int8')
-	val_labels = np.zeros((len(val_data), config.max_sent_len), dtype='int8')
-	test_labels = np.zeros((len(test_data), config.max_sent_len), dtype='int8')
+	train_labels = np.zeros((len(train_data), 2, config.max_sent_len), dtype='int8')
+	val_labels = np.zeros((len(val_data), 2, config.max_sent_len), dtype='int8')
+	test_labels = np.zeros((len(test_data), 2, config.max_sent_len), dtype='int8')
 
 	for index, r in enumerate(train_data):
 		train_word_embs[index, :, :] = tokens_to_embs(r["Tokens"], embeddings, word2idx)
-		train_labels[index, :] = get_entity_idx(r, entity_dir)
+		train_labels[index, 0, :], train_labels[index, 1, :] = get_entity_idx(r, entity_dir)
 	for index, r in enumerate(val_data):
 		val_word_embs[index, :] = tokens_to_embs(r["Tokens"], embeddings, word2idx)
-		val_labels[index, :] = get_entity_idx(r, entity_dir)
+		val_labels[index, 0, :], val_labels[index, 1, :] = get_entity_idx(r, entity_dir)
 	for index, r in enumerate(val_data):
 		test_word_embs[index, :] = tokens_to_embs(r["Tokens"], embeddings, word2idx)
-		test_labels[index, :] = get_entity_idx(r, entity_dir)
+		test_labels[index, 0, :], test_labels[index, 1, :] = get_entity_idx(r, entity_dir)
 
 	return train_word_embs, train_labels, val_word_embs, val_labels, test_word_embs, test_labels
 
 
 def get_multi_data():
-	return NotImplementedError
+	pass
 
 
 if __name__ == '__main__':
@@ -166,16 +199,18 @@ if __name__ == '__main__':
 	# print(out_embs[0,:])
 	# print(out_embs[1,:])
 
-	#--------------------------------------------------------------------
+	# --------------------------------------------------------------------
 
 	# type = get_entity_type_from_id("CNN_CF_20030303.1900.00-E80-155", '../../resource/data/ace-2005/entityDictionary/adj_all/')
 	# print(type)
 
-	#--------------------------------------------------------------------
+	# --------------------------------------------------------------------
 
-	train_word_embs, train_labels, val_word_embs, val_labels, test_word_embs, test_labels = get_entity_data('../../resource/data/ace-2005/relationMention/data-set/', '../../resource/embeddings/glove/glove.6B.50d.txt',
-																											'../../resource/data/ace-2005/entityDictionary/adj_all/')
+	# train_word_embs, train_labels, val_word_embs, val_labels, test_word_embs, test_labels = get_entity_data_old(
+	# 	'../../resource/data/ace-2005/relationMention/data-set/', '../../resource/embeddings/glove/glove.6B.50d.txt',
+	# 	'../../resource/data/ace-2005/entityDictionary/adj_all/')
+	# print(train_labels[0, 0, :])
+	# print(train_labels[0, 1, :])
 
-
-	print(train_labels[0,:])
+	load_entity_instances('../../resource/data/ace-2005/entityDictionary/adj_all/')
 
