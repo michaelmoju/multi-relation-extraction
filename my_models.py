@@ -74,5 +74,5 @@ def model_entity(embeddings, lstm_size = 128, entity_type_n=29, max_sent_len=con
 if __name__ == '__main__':
 
 	embeddings, word2idx= word_embeddings.load_word_emb('../resource/embeddings/glove/glove.6B.50d.txt')
-	model_entity(embeddings)
+	model = model_entity(embeddings)
 

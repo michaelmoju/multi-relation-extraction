@@ -1,8 +1,6 @@
 # Author: Moju Wu
-#
-# IO for relation.json
+
 import json
-import random
 import config
 import glob
 
@@ -42,4 +40,8 @@ def get_entity_from_files(path):
 	print(entities.keys())
 
 	return entities
+
+def read_so(fp):
+	pass
+
 
