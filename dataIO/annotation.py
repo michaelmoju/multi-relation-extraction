@@ -68,5 +68,6 @@ class RelationInstance:
 	TODO: relation instance class.
 	"""
 
-
+if __name__ == '__main__':
+	import annotation.relation
 
