@@ -6,10 +6,6 @@ import re
 all_zeros = "ALL_ZERO"
 unknown = "UNKNOWN"
 
-# special_tokens = {"&ndash;": "–",
-# 				  "&mdash;": "—",
-# 				  "@card@": "0"}
-
 special_tokens = {"-DQS-": "``", "-DQE-": "''", "-LRB-": "(", "-RRB-": ")", "-COMMA-": ",", "-COLON-": ":",
 				  "-SEMICOLON-": ";", "-PERIOD-": ".", "-DOLLAR-": "$", "-PERCENT-": "%"}
 

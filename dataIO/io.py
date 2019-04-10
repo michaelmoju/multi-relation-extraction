@@ -41,7 +41,4 @@ def get_entity_from_files(path):
 
 	return entities
 
-def read_so(fp):
-	pass
-
 
