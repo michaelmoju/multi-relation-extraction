@@ -69,5 +69,5 @@ class RelationInstance:
 	"""
 
 if __name__ == '__main__':
-	import annotation.relation
+	import annotation.event
 
