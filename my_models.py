@@ -1,9 +1,26 @@
+import os
+import json
 import tensorflow as tf
-import tensorflow.python.keras as keras
+import tensorflow.keras as keras
 from tensorflow.python.keras import layers, Model
+import numpy as np
 
 import word_embeddings
 import config
+
+module_location = os.path.abspath(__file__)
+module_location = os.path.dirname(module_location)
+
+with open(os.path.join(module_location, "./model_params.json")) as f:
+	model_params = json.load(f)
+
+label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
+				 'B-ORG': 5, 'I-ORG': 6, 'L-ORG': 7, 'U-ORG': 8,
+				 'B-LOC': 9, 'I-LOC': 10, 'L-LOC': 11, 'U-LOC': 12,
+				 'B-GPE': 13, 'I-GPE': 14, 'L-GPE': 15, 'U-GPE': 16,
+				 'B-FAC': 17, 'I-FAC': 18, 'L-FAC': 19, 'U-FAC': 20,
+				 'B-VEH': 21, 'I-VEH': 22, 'L-VEH': 23, 'U-VEH': 24,
+				 'B-WEA': 25, 'I-WEA': 26, 'L-WEA': 27, 'U-WEA': 28, 'O': 29}
 
 train_m = 6000
 r_type_n = 7
@@ -69,6 +86,17 @@ def model_entity(embeddings, lstm_size = 128, entity_type_n=29, max_sent_len=con
 	model.compile(optimizer='Adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
+
+
+def to_indices_with_entity_instances(instances, word2idx):
+	out_sent_matrix = np.zeros((len(instances), model_params['max_sent_len']), dtype="int32")
+	label_matrix = np.zeros((len(instances), model_params['max_sent_len']), dtype="int8")
+
+	for index, instance in enumerate(instances):
+		out_sent_matrix[index, :] = instance.get_word_idx(model_params['max_sent_len'], word2idx)
+		label_matrix[index, :] = instance.get_label(label2idx, model_params['max_sent_len'])
+
+	return out_sent_matrix, label_matrix
 
 
 if __name__ == '__main__':

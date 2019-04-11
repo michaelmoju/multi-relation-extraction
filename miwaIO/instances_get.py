@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import json
+import tqdm
 from miwaIO.io_miwa import read_so, read_annot, check_no_nested_entity_mentions
 from miwaIO.annotation import *
 
@@ -26,9 +27,8 @@ def load_entity_instances_from_file(dir, docID):
 	relation_num = 0
 	sentence_num = 0
 
-
 	entity_mentions, relation_mentions = read_annot(dir+docID+'.split.ann')
-	check_no_nested_entity_mentions(entity_mentions)
+	check_no_nested_entity_mentions(entity_mentions, docID)
 	entity_num += len(entity_mentions)
 	relation_num += len(relation_mentions)
 
@@ -45,16 +45,20 @@ def load_entity_instances_from_file(dir, docID):
 
 	return out_instances
 
-def load_entity_instances_from_files(dir):
+
+def load_entity_instances_from_files(dir, max_sent=False):
 	out_instances = []
 	entity_num = 0
 	relation_num = 0
 	sentence_num = 0
 
+	max_sent_token_num = 0
+
+	# TODO: load it from docIDs
 	for f in os.listdir(dir):
 		if f.endswith('.split.ann'):
 			entity_mentions, relation_mentions = read_annot(dir+f)
-			check_no_nested_entity_mentions(entity_mentions)
+			check_no_nested_entity_mentions(entity_mentions, docID=f)
 			entity_num += len(entity_mentions)
 			relation_num += len(relation_mentions)
 
@@ -62,6 +66,10 @@ def load_entity_instances_from_files(dir):
 			sentence_num += len(mysents)
 
 			for sent in mysents:
+				if max_sent:
+					if len(sent.tokens) > max_sent_token_num:
+						max_sent_token_num = len(sent.tokens)
+
 				out_instances.append(load_entity_instance(entity_mentions.values(), sent))
 
 
@@ -70,7 +78,8 @@ def load_entity_instances_from_files(dir):
 	print("sentence number:{}".format(sentence_num))
 			# print(out_sents[0].id)
 
-	return out_instances
+	if max_sent: return out_instances, max_sent
+	else: return out_instances
 
 
 if __name__ == '__main__':
@@ -81,8 +90,23 @@ if __name__ == '__main__':
 				 'B-FAC': 17, 'I-FAC': 18, 'L-FAC': 19, 'U-FAC': 20,
 				 'B-VEH': 21, 'I-VEH': 22, 'L-VEH': 23, 'U-VEH': 24,
 				 'B-WEA': 25, 'I-WEA': 26, 'L-WEA': 27, 'U-WEA': 28, 'O': 29}
-	out_instances = load_entity_instances_from_file('../../resource/data/ace-2005/miwa2016/corpus/dev/', 'XIN_ENG_20030513.0002')
-	print(out_instances[5].get_label(label2idx, 200))
-	print(out_instances[5].get_tokens())
+	# out_instances = load_entity_instances_from_file('../../resource/data/ace-2005/miwa2016/corpus/dev/', 'XIN_ENG_20030513.0002')
+	# print(out_instances[5].get_label(label2idx, 200))
+	# print(out_instances[5].get_tokens())
+
 	# out_instances = load_entity_instances_from_files('../../resource/data/ace-2005/miwa2016/corpus/dev/')
 	# print(out_instances[10].get_label(label2idx, 200))
+	# print(out_instances[10].get_tokens())
+
+	max_sent_num = 0
+
+	out_instances, max_sent_num = load_entity_instances_from_files('../../resource/data/ace-2005/miwa2016/corpus/train/', max_sent_num)
+	print(max_sent_num)
+
+	max_sent_num = 0
+	out_instances, max_sent_num = load_entity_instances_from_files('../../resource/data/ace-2005/miwa2016/corpus/dev/', max_sent_num)
+	print(max_sent_num)
+
+	max_sent_num = 0
+	out_instances, max_sent_num = load_entity_instances_from_files('../../resource/data/ace-2005/miwa2016/corpus/test/', max_sent_num)
+	print(max_sent_num)

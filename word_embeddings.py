@@ -35,8 +35,19 @@ def get_idx(word, word2idx):
 	return unknown_idx
 
 
-def get_idx_sequence(word, word2idx):
-	return NotImplementedError
+def get_idx_sequence(word_sequence, word2idx):
+	"""
+	    Get embedding indices for the given word sequence.
+
+	    :param word_sequence: sequence of words to process
+	    :param word2idx: dictionary of word mapped to their embedding indices
+	    :return: a sequence of embedding indices
+	    """
+	vector = []
+	for word in word_sequence:
+		word_idx = get_idx(word, word2idx)
+		vector.append(word_idx)
+	return vector
 
 
 def load_word_emb(emb_path):

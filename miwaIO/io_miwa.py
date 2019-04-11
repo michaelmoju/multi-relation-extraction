@@ -54,7 +54,7 @@ def read_annot(fh):
 	return entity_mentions, relation_mentions
 
 
-def check_no_nested_entity_mentions(entity_mentions):
+def check_no_nested_entity_mentions(entity_mentions, docID):
 	def nested(m, start, end):
 		for i in range(start, end + 1):
 			if i in range(m.start, m.end + 1):
@@ -65,7 +65,7 @@ def check_no_nested_entity_mentions(entity_mentions):
 	for m in entity_mentions.values():
 		for (start, end) in span_list:
 			if not nested(m, start, end): continue
-			else: sys.stderr.write("nested entities found!")
+			else: sys.stderr.write("nested entities found in {}!".format(docID) + " mentionID:{}".format(m.id) + '\n')
 		span_list.append((m.start, m.end))
 
 
