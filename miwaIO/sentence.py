@@ -1,7 +1,7 @@
 class Sentence:
 	def __init__(self, start, end, id):
-		self.start = start
-		self.end = end
+		self.start = int(start)
+		self.end = int(end)
 		self.id = id
 		self.tokens = []
 
@@ -10,8 +10,8 @@ class Sentence:
 
 class Token:
 	def __init__(self, start, end, id, word):
-		self.start = start
-		self.end = end
+		self.start = int(start)
+		self.end = int(end)
 		self.id = id
 		self.word = word
 

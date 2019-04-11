@@ -1,10 +1,7 @@
 import my_models
 import word_embeddings
 import config
-import random
-from dataIO import *
 
-random.seed(0)
 
 if __name__ == '__main__':
 	import argparse

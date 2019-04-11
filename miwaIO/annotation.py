@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class EntityMention:
 	def __init__(self, id, type, start, end, words):
 		self.id = id
@@ -26,7 +27,7 @@ class EntityInstance:
 
 	def get_label(self, label2idx, max_sent_len):
 		out_array = np.zeros((max_sent_len,))
-		for i in range(len(self.sentence)):
+		for i in range(len(self.sentence.tokens)):
 			out_array[i] = label2idx['O']
 		for m in self.mentions:
 			for t_index, t in enumerate(self.sentence.tokens):
@@ -37,8 +38,10 @@ class EntityInstance:
 			assert mention_token_end >= mention_token_start
 
 			for i in range(mention_token_start, mention_token_end+1):
-				if i == mention_token_end:
+				if mention_token_start == mention_token_end:
 					key = 'U'
+				elif i == mention_token_end:
+					key = 'L'
 				elif i == mention_token_start:
 					key = 'B'
 				else:
@@ -47,6 +50,9 @@ class EntityInstance:
 				out_array[i] = label2idx[key]
 
 		return out_array
+
+	def get_tokens(self):
+		return [t.word for t in self.sentence.tokens]
 
 
 class RelationInstance:

@@ -4,9 +4,6 @@ from miwaIO.sentence import Token, Sentence
 from miwaIO.annotation import *
 
 
-
-
-
 def read_so(fh):
 	out_sents = []
 	with open(fh, 'r') as f:
@@ -51,9 +48,9 @@ def read_annot(fh):
 				print(len(data))
 				sys.stderr.write("read_annot error!")
 
-	print("docID:{} has {} entity mentions".format(docID, len(entity_mentions)))
-	print("docID:{} has {} relation mentions".format(docID, len(relation_mentions)))
-	print()
+	# print("docID:{} has {} entity mentions".format(docID, len(entity_mentions)))
+	# print("docID:{} has {} relation mentions".format(docID, len(relation_mentions)))
+	# print()
 	return entity_mentions, relation_mentions
 
 
