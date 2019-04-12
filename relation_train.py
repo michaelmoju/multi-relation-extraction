@@ -45,7 +45,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['train-entity', 'train-relation', 'evaluate', 'predict'])
-	parser.add_argument('--epoch', default=10)
+	parser.add_argument('--epoch', default=10, type=int)
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
 	parser.add_argument('--metadata', default='10', type=str)
