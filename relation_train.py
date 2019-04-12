@@ -3,6 +3,7 @@ from miwaIO.instances_get import *
 import my_models
 import tensorflow as tf
 from tensorflow.python.keras import callbacks
+import matplotlib.pyplot as plt
 
 
 def prediction(model, data_input):
@@ -11,6 +12,31 @@ def prediction(model, data_input):
 	predictions_classes = np.argmax(predictions, axis=-1)
 
 	return predictions_classes
+
+
+def plot_callback(callback_history, models_folder):
+
+	# Plot training & validation accuracy values
+	plt.plot(callback_history.history['acc'])
+	plt.plot(callback_history.history['val_acc'])
+	plt.title('Model accuracy')
+	plt.ylabel('Accuracy')
+	plt.xlabel('Epoch')
+	plt.legend(['Train', 'Validation'], loc='upper left')
+	plt.savefig(args.models_folder + 'accuracy.png')
+	plt.clf()
+	# plt.show()
+
+	# Plot training & validation loss values
+	plt.plot(callback_history.history['loss'])
+	plt.plot(callback_history.history['val_loss'])
+	plt.title('Model loss')
+	plt.ylabel('Loss')
+	plt.xlabel('Epoch')
+	plt.legend(['Train', 'Validation'], loc='upper left')
+	plt.savefig(models_folder + 'loss.png')
+	# plt.show()
+	plt.clf()
 
 
 if __name__ == '__main__':
@@ -63,6 +89,8 @@ if __name__ == '__main__':
 		callback_history = model.fit(train_sent, train_one_hot, epochs=args.epoch, batch_size=model_params["batch_size"],
 									 validation_data=(dev_sent, dev_one_hot),
 									callbacks=cbfunctions)
+
+		plot_callback(callback_history, args.models_folder)
 
 	elif mode == 'summary':
 		model = getattr(my_models, model_name)(embeddings)
