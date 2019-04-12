@@ -48,6 +48,7 @@ class EntityInstance:
 					key = 'I'
 				key = key + '-' + m.type
 				out_array[i] = label2idx[key]
+		self.label = out_array
 
 		return out_array
 
@@ -55,7 +56,7 @@ class EntityInstance:
 		return [t.word for t in self.sentence.tokens]
 
 	def get_word_idx(self, max_sent_len, word2idx):
-		out_array = np.zeros(max_sent_len, )
+		out_array = np.zeros((max_sent_len, ))
 		token_word_idx = get_idx_sequence(self.get_tokens(), word2idx)
 		out_array[:len(token_word_idx)] = token_word_idx
 		return out_array
