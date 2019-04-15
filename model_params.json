@@ -1,13 +1,15 @@
 {
-  "rnn1_layers": 1,
+  "learning_rate": 0.01,
   "bidirectional": false,
-  "units1": 128,
+  "lstm1": 128,
+  "lstm2": 128,
   "dropout1": 0.5,
   "optimizer": "adam",
-  "entity_emb": 3,
+  "position_emb": 3,
   "batch_size": 128,
   "property2idx": "property2idx.txt",
   "entity_type_property2idx": "entity_type_property2idx.txt",
-  "max_sent_len": 120,
-  "entity_type_n": 29
+  "max_sent_len": 200,
+  "entity_type_n": 29,
+  "relation_type_n": 7
 }

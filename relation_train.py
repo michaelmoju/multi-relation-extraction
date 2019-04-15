@@ -2,12 +2,15 @@ import word_embeddings
 from miwaIO.instances_get import *
 import my_models
 import tensorflow as tf
-from tensorflow.python.keras import callbacks
+from tensorflow.keras import models, callbacks
 import matplotlib.pyplot as plt
+from dataIO import io
+
+p = my_models.p
 
 
 def prediction(model, data_input):
-	predictions = model.predict(data_input, batch_size=my_models.model_params['batch_size'], verbose=1)
+	predictions = model.predict(data_input, batch_size=my_models.p['batch_size'], verbose=1)
 
 	predictions_classes = np.argmax(predictions, axis=-1)
 
@@ -17,8 +20,8 @@ def prediction(model, data_input):
 def plot_callback(callback_history, models_folder):
 
 	# Plot training & validation accuracy values
-	plt.plot(callback_history.history['acc'])
-	plt.plot(callback_history.history['val_acc'])
+	plt.plot(callback_history.history['accuracy'])
+	plt.plot(callback_history.history['val_accuracy'])
 	plt.title('Model accuracy')
 	plt.ylabel('Accuracy')
 	plt.xlabel('Epoch')
@@ -45,10 +48,10 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['train-entity', 'train-relation', 'evaluate', 'predict'])
-	parser.add_argument('--epoch', default=10, type=int)
+	parser.add_argument('--epoch', default=1, type=int)
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
-	parser.add_argument('--metadata', default='10', type=str)
+	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--models_folder', default="./trainedmodels/")
 	args = parser.parse_args()
@@ -77,20 +80,64 @@ if __name__ == '__main__':
 	train_one_hot = tf.keras.utils.to_categorical(train_label, 29)
 	dev_one_hot = tf.keras.utils.to_categorical(dev_label, 29)
 
+	cbfunctions = []
+	if args.checkpoint:
+		checkpoint = callbacks.ModelCheckpoint(args.models_folder + model_name + '-{epoch:02d}' + ".kerasmodel",
+											   monitor='val_loss', verbose=1, save_best_only=True)
+		cbfunctions.append(checkpoint)
+
 	if mode == 'train-entity':
 		model = getattr(my_models, model_name)(embeddings)
-
-		cbfunctions = []
-		if args.checkpoint:
-			checkpoint = callbacks.ModelCheckpoint(args.models_folder + model_name + '-{epoch:02d}' + ".kerasmodel",
-				monitor='val_loss', verbose=1, save_best_only=True)
-			cbfunctions.append(checkpoint)
-
 		callback_history = model.fit(train_sent, train_one_hot, epochs=args.epoch, batch_size=model_params["batch_size"],
 									 validation_data=(dev_sent, dev_one_hot),
 									callbacks=cbfunctions)
 
 		plot_callback(callback_history, args.models_folder)
+
+	elif mode == 'train-relation':
+
+		relationMention_ph = '../resource/data/ace-2005/relationMention/data-set/'
+		train_data, val_data, test_data = io.load_relation_from_existing_sets(relationMention_ph)
+
+		print("Training data size: {}".format(len(train_data)))
+		print("Validation data size: {}".format(len(val_data)))
+		print("Testing data size: {}".format(len(val_data)))
+
+		to_one_hot = tf.keras.utils.to_categorical
+		graphs_to_indices = my_models.to_indices_with_extracted_entities
+
+		train_as_indices = list(graphs_to_indices(train_data, word2idx))
+		print("Dataset shapes: {}".format([d.shape for d in train_as_indices]))
+
+		train_data = None
+
+		n_out = p['relation_type_n']  # n_out = number of relation categories
+		print("N_out:", n_out)
+
+		val_as_indices = list(graphs_to_indices(val_data, word2idx))
+		# val_data = None
+
+		test_as_indices = list(graphs_to_indices(test_data, word2idx))
+		test_data = None
+
+		# sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
+		train_y_properties_one_hot = to_one_hot(train_as_indices[-1], n_out)
+
+		val_y_properties_one_hot = to_one_hot(val_as_indices[-1], n_out)
+
+		test_y_properties_one_hot = to_one_hot(test_as_indices[-1], n_out)
+		entity_model = models.load_model(args.models_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
+
+		entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
+
+		relation_model = getattr(my_models, model_name)(embeddings, entity_weights, train_entity=True)
+		callback_history = relation_model.fit(train_as_indices[:-1],
+									[train_y_properties_one_hot],
+									epochs=args.epoch,
+									batch_size=p['batch_size'],
+									verbose=1,
+									validation_data=(val_as_indices[:-1], val_y_properties_one_hot),
+									callbacks=cbfunctions)
 
 	elif mode == 'summary':
 		model = getattr(my_models, model_name)(embeddings)
