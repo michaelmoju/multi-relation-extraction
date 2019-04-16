@@ -40,11 +40,11 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 		word_embeddings = layers.Dropout(0.5)(word_embeddings)
 
 	if train_entity:
-		lstm1_out = layers.Bidirectional(layers.CuLSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'),
+		lstm1_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'),
 										 name='entity_BiLSTM_layer')(word_embeddings)
 	else:
 		lstm1_out = layers.Bidirectional(
-			layers.CuLSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'), weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
+			layers.LSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'), weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
 	if dropout:
 		lstm1_out = layers.Dropout(0.5)(lstm1_out)
 
@@ -63,7 +63,7 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 										   mask_zero=True, trainable=True)(arg2_markers)
 
 	concate = layers.concatenate([lstm1_out, arg1_pos_embeddings, arg2_pos_embeddings])
-	lstm2_out = layers.CuLSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
+	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
 	# TODO: dropout
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
 
@@ -88,7 +88,7 @@ def model_entity(embeddings, dropout=False):
 	if dropout:
 		word_embeddings = layers.Dropout(0.5)(word_embeddings)
 
-	lstm_out = layers.Bidirectional(layers.CuLSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'), name='entity_BiLSTM_layer')(word_embeddings)
+	lstm_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'), name='entity_BiLSTM_layer')(word_embeddings)
 	if dropout:
 		lstm_out = layers.Dropout(0.5)(lstm_out)
 
