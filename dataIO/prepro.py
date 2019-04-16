@@ -2,7 +2,6 @@
 
 import json
 import re
-import tqdm
 import os
 import numpy as np
 import ast

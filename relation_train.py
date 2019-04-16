@@ -48,7 +48,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['train-entity', 'train-relation', 'evaluate', 'predict'])
-	parser.add_argument('--epoch', default=1, type=int)
+	parser.add_argument('--epoch', default=50, type=int)
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
 	parser.add_argument('--metadata', default='01', type=str)
@@ -138,6 +138,8 @@ if __name__ == '__main__':
 									verbose=1,
 									validation_data=(val_as_indices[:-1], val_y_properties_one_hot),
 									callbacks=cbfunctions)
+
+		plot_callback(callback_history, args.models_folder)
 
 	elif mode == 'summary':
 		model = getattr(my_models, model_name)(embeddings)
