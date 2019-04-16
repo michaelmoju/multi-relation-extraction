@@ -1,7 +1,5 @@
-import numpy as np
 import os
 import json
-import tqdm
 from miwaIO.io_miwa import read_so, read_annot, check_no_nested_entity_mentions
 from miwaIO.annotation import *
 
