@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
 		entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
 
-		relation_model = getattr(my_models, model_name)(embeddings, entity_weights, train_entity=True)
+		relation_model = getattr(my_models, model_name)(embeddings, entity_weights)
 		callback_history = relation_model.fit(train_as_indices[:-1],
 									[train_y_properties_one_hot],
 									epochs=args.epoch,
