@@ -53,6 +53,7 @@ if __name__ == '__main__':
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
+	parser.add_argument('--dropout', action='store_true')
 	parser.add_argument('--models_folder', default="./trainedmodels/")
 	args = parser.parse_args()
 
@@ -87,7 +88,7 @@ if __name__ == '__main__':
 		cbfunctions.append(checkpoint)
 
 	if mode == 'train-entity':
-		model = getattr(my_models, model_name)(embeddings)
+		model = getattr(my_models, model_name)(embeddings, dropout=args.dropout)
 		callback_history = model.fit(train_sent, train_one_hot, epochs=args.epoch, batch_size=model_params["batch_size"],
 									 validation_data=(dev_sent, dev_one_hot),
 									callbacks=cbfunctions)

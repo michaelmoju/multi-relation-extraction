@@ -36,7 +36,7 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 									   name='embedding_layer')(sentence_input)
 	print(word_embeddings.shape)
 	if dropout:
-		word_embeddings = layers.Dropout(0.5)(word_embeddings)
+		word_embeddings = layers.Dropout(p['dropout'])(word_embeddings)
 
 	if train_entity:
 		lstm1_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'),
@@ -45,7 +45,7 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 		lstm1_out = layers.Bidirectional(
 			layers.LSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'), weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
 	if dropout:
-		lstm1_out = layers.Dropout(0.5)(lstm1_out)
+		lstm1_out = layers.Dropout(p['dropout'])(lstm1_out)
 
 	entity_class = layers.Dense(p['entity_type_n'], activation='softmax', name='entity_softmax_layer')(lstm1_out)
 
@@ -85,11 +85,11 @@ def model_entity(embeddings, dropout=False):
 									   mask_zero=True,
 									   name='embedding_layer')(sentence_input)
 	if dropout:
-		word_embeddings = layers.Dropout(0.5)(word_embeddings)
+		word_embeddings = layers.Dropout(p['dropout'])(word_embeddings)
 
 	lstm_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'), name='entity_BiLSTM_layer')(word_embeddings)
 	if dropout:
-		lstm_out = layers.Dropout(0.5)(lstm_out)
+		lstm_out = layers.Dropout(p['dropout'])(lstm_out)
 
 	main_out = layers.Dense(p['entity_type_n'], activation='softmax', name='entity_softmax_layer')(lstm_out)
 
@@ -139,7 +139,7 @@ def to_indices_with_extracted_entities(relation_instances, word2idx):
 if __name__ == '__main__':
 
 	embeddings, word2idx= word_embeddings.load_word_emb('../resource/embeddings/glove/glove.6B.50d.txt')
-	model = model_entity(embeddings)
+	model = model_entity(embeddings, dropout=True)
 	print(model.summary())
 	utils.plot_model(model, './trainedmodels/entity_model.png', show_shapes=True)
 
