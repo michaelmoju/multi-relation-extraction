@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
 	elif mode == 'train-relation':
 
-		relationMention_ph = '../resource/data/ace-2005/relationMention/data-set/'
+		relationMention_ph = '../resource/data/ace-2005/relationMention/english/data-set/'
 		train_data, val_data, test_data = io.load_relation_from_existing_sets(relationMention_ph)
 
 		print("Training data size: {}".format(len(train_data)))
