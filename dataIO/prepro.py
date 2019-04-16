@@ -4,10 +4,8 @@ import json
 import re
 import os
 import numpy as np
-import ast
 import word_embeddings
 from dataIO import io
-import config
 from dataIO.annotation import *
 
 config = config.define_config()

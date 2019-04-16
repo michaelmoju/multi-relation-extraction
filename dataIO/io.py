@@ -1,10 +1,7 @@
 # Author: Moju Wu
 
 import json
-import config
 import glob
-
-config = config.define_config()
 
 
 def read_relations_from_file(json_file):

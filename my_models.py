@@ -5,7 +5,6 @@ from tensorflow.keras import layers, Model, utils
 import numpy as np
 
 import word_embeddings
-import config
 
 module_location = os.path.abspath(__file__)
 module_location = os.path.dirname(module_location)
@@ -30,7 +29,7 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 
 	sentence_input = layers.Input((p['max_sent_len'],), dtype='int32', name='sentence_input')
 	word_embeddings = layers.Embedding(embeddings.shape[0], embeddings.shape[1],
-									   weights=embeddings,
+									   weights=[embeddings],
 									   input_length=p['max_sent_len'],
 									   trainable=False,
 									   mask_zero=True,
@@ -80,7 +79,7 @@ def model_entity(embeddings, dropout=False):
 
 	sentence_input = layers.Input((p['max_sent_len'],), dtype='int32', name='sentence_input')
 	word_embeddings = layers.Embedding(embeddings.shape[0], embeddings.shape[1],
-									   weights = embeddings,
+									   weights = [embeddings],
 									   input_length=p['max_sent_len'],
 									   trainable=False,
 									   mask_zero=True,
