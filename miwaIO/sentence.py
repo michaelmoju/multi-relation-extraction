@@ -8,6 +8,10 @@ class Sentence:
 	def append_token(self, token):
 		self.tokens.append(token)
 
+	def to_words(self):
+		return [t.word for t in self.tokens]
+
+
 class Token:
 	def __init__(self, start, end, id, word):
 		self.start = int(start)

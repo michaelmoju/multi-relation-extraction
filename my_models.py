@@ -22,8 +22,48 @@ e_label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
 
 r_label2idx = {'PHYS': 1, 'PART-WHOLE': 2, 'PER-SOC': 3, 'ORG-AFF': 4, 'ART': 5, 'GEN-AFF': 6, 'METONYMY': 7}
 
+POSITION_VOCAB_SIZE = 3
 
-def model_relation(embeddings, entity_weights, train_entity=False, dropout=False):
+
+def model_relation_LSTMbaseline(embeddings):
+	print('\nStart model_relation_LSTMbaseline...')
+	print('word_embedding_shape:{}'.format(embeddings.shape))
+
+	sentence_input = layers.Input((p['max_sent_len'],), dtype='int32', name='sentence_input')
+	word_embeddings = layers.Embedding(embeddings.shape[0], embeddings.shape[1],
+									   weights=[embeddings],
+									   input_length=p['max_sent_len'],
+									   trainable=False,
+									   mask_zero=True,
+									   name='embedding_layer')(sentence_input)
+
+	word_embeddings = layers.Dropout(p['dropout'])(word_embeddings)
+
+	# Take arg1_markers that identify entity positions, convert to position embeddings
+	arg1_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg1_markers')
+	arg1_pos_embeddings = layers.Embedding(POSITION_VOCAB_SIZE, p['position_emb'],
+										   input_length=p['max_sent_len'],
+										   mask_zero=True, trainable=True)(arg1_markers)
+
+	# Take arg2_markers that identify entity positions, convert to position embeddings
+	arg2_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg2_markers')
+	arg2_pos_embeddings = layers.Embedding(POSITION_VOCAB_SIZE, p['position_emb'],
+										   input_length=p['max_sent_len'],
+										   mask_zero=True, trainable=True)(arg2_markers)
+
+	concate = layers.concatenate([word_embeddings, arg1_pos_embeddings, arg2_pos_embeddings])
+	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
+	# TODO: dropout
+	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
+
+	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
+	adamopt = tf.optimizers.Adam(p['learning_rate'])
+	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
+
+	return model
+
+
+def model_relation_multi(embeddings, entity_weights, train_entity=False, dropout=False):
 	print('\nStart model_relation... Train_entity:{}'.format(train_entity))
 	print('word_embedding_shape:{}'.format(embeddings.shape))
 
@@ -66,7 +106,7 @@ def model_relation(embeddings, entity_weights, train_entity=False, dropout=False
 	# TODO: dropout
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
 
-	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=main_out)
+	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
 	adamopt = tf.optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
@@ -111,16 +151,20 @@ def to_indices_with_entity_instances(instances, word2idx):
 	return out_sent_matrix, label_matrix
 
 
-def to_indices_with_extracted_entities(relation_instances, word2idx):
+def r_to_indices_type_e(instances, word2idx):
+	pass
+
+
+def r_to_indices_position_e(instances, word2idx):
 	max_sent_len = p['max_sent_len']  # 120
-	sentences_matrix = np.zeros((len(relation_instances), max_sent_len), dtype="int32")  # (sentence_number, sentence_len)
-	arg1_matrix = np.zeros((len(relation_instances), max_sent_len), dtype="int8")
-	arg2_matrix = np.zeros((len(relation_instances), max_sent_len), dtype="int8")
-	y_matrix = np.zeros((len(relation_instances), 1), dtype="int16")  # relation type 1~7
+	sentences_matrix = np.zeros((len(instances), max_sent_len), dtype="int32")  # (sentence_number, sentence_len)
+	arg1_matrix = np.zeros((len(instances), max_sent_len), dtype="int8")
+	arg2_matrix = np.zeros((len(instances), max_sent_len), dtype="int8")
+	y_matrix = np.zeros((len(instances), 1), dtype="int16")  # relation type 1~7
 
-	for index, r in enumerate(relation_instances):
+	for index, r in enumerate(instances):
 
-		token_wordvec_ids = word_embeddings.get_idx_sequence(r["Tokens"], word2idx)
+		token_wordvec_ids = word_embeddings.get_idx_sequence(r.sentence.to_words(), word2idx)
 		sentences_matrix[index, :len(token_wordvec_ids)] = token_wordvec_ids
 
 		arg1_matrix[index, :len(token_wordvec_ids)] = 1

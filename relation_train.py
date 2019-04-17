@@ -1,10 +1,8 @@
 import word_embeddings
-from miwaIO.instances_get import *
+from miwaIO.load import *
 import my_models
-import tensorflow as tf
-from tensorflow.keras import models, callbacks
+from tensorflow.keras import models, callbacks, utils
 import matplotlib.pyplot as plt
-from dataIO import io
 
 p = my_models.p
 
@@ -54,6 +52,7 @@ if __name__ == '__main__':
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--dropout', action='store_true')
+	parser.add_argument('--pretrain', action='store_true')
 	parser.add_argument('--models_folder', default="./trainedmodels/entity/")
 	parser.add_argument('--entity_folder', default='./trainedmodels/relation/')
 	args = parser.parse_args()
@@ -68,78 +67,46 @@ if __name__ == '__main__':
 	dev_dir = data_path + 'dev/'
 	test_dir = data_path + 'test/'
 
-	train_instances = load_entity_instances_from_files(train_dir)
-	dev_instances = load_entity_instances_from_files(dev_dir)
-	test_instances = load_entity_instances_from_files(test_dir)
-
-	train_sent, train_label = my_models.to_indices_with_entity_instances(train_instances, word2idx)
-	dev_sent, dev_label = my_models.to_indices_with_entity_instances(dev_instances, word2idx)
-	# print(train_sent.shape)
-	# print(train_label.shape)
-
-	print(dev_sent.shape)
-
-	train_one_hot = tf.keras.utils.to_categorical(train_label, 29)
-	dev_one_hot = tf.keras.utils.to_categorical(dev_label, 29)
-
 	cbfunctions = []
 	if args.checkpoint:
 		checkpoint = callbacks.ModelCheckpoint(args.models_folder + model_name + '-{epoch:02d}' + ".kerasmodel",
 											   monitor='val_loss', verbose=1, save_best_only=True)
 		cbfunctions.append(checkpoint)
 
-	if mode == 'train-entity':
-		model = getattr(my_models, model_name)(embeddings, dropout=args.dropout)
-		callback_history = model.fit(train_sent, train_one_hot, epochs=args.epoch, batch_size=model_params["batch_size"],
-									 validation_data=(dev_sent, dev_one_hot),
-									callbacks=cbfunctions)
+	if 'train' in mode:
+		if mode == 'train-entity':
+			load_instance = load_entity_instances_from_files
+			to_indices = my_models.to_indices_with_entity_instances
+			model = my_models.model_entity(embeddings, dropout=args.dropout)
+			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['entity_type_n'])
 
-		plot_callback(callback_history, args.models_folder)
+		elif mode == 'train-relation':
+			load_instance = load_relation_instances_from_files
 
-	elif mode == 'train-relation':
+			if 'LSTMbaseline' in model_name:
+				to_indices = my_models.r_to_indices_position_e
+				model = my_models.model_relation_LSTMbaseline(embeddings)
 
-		relationMention_ph = '../resource/data/ace-2005/relationMention/english/data-set/'
-		train_data, val_data, test_data = io.load_relation_from_existing_sets(relationMention_ph)
+			elif 'multi' in model_name:
+				entity_model = models.load_model(args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
+				entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
 
-		print("Training data size: {}".format(len(train_data)))
-		print("Validation data size: {}".format(len(val_data)))
-		print("Testing data size: {}".format(len(val_data)))
+				to_indices = my_models.r_to_indices_type_e
+				model = my_models.model_relation_multi(embeddings, entity_weights)
 
-		to_one_hot = tf.keras.utils.to_categorical
-		graphs_to_indices = my_models.to_indices_with_extracted_entities
+			else:
+				raise NameError
 
-		train_as_indices = list(graphs_to_indices(train_data, word2idx))
-		print("Dataset shapes: {}".format([d.shape for d in train_as_indices]))
+			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['relation_type_n'])
+		else:
+			raise NameError
 
-		train_data = None
-
-		n_out = p['relation_type_n']  # n_out = number of relation categories
-		print("N_out:", n_out)
-
-		val_as_indices = list(graphs_to_indices(val_data, word2idx))
-		# val_data = None
-
-		test_as_indices = list(graphs_to_indices(test_data, word2idx))
-		test_data = None
-
-		# sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
-		train_y_properties_one_hot = to_one_hot(train_as_indices[-1], n_out)
-
-		val_y_properties_one_hot = to_one_hot(val_as_indices[-1], n_out)
-
-		test_y_properties_one_hot = to_one_hot(test_as_indices[-1], n_out)
-		entity_model = models.load_model(args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
-
-		entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
-
-		relation_model = getattr(my_models, model_name)(embeddings, entity_weights)
-		callback_history = relation_model.fit(train_as_indices[:-1],
-									[train_y_properties_one_hot],
-									epochs=args.epoch,
-									batch_size=p['batch_size'],
-									verbose=1,
-									validation_data=(val_as_indices[:-1], val_y_properties_one_hot),
-									callbacks=cbfunctions)
+		callback_history = model.fit(data[0], data[1],
+											  epochs=args.epoch,
+											  batch_size=p['batch_size'],
+											  verbose=1,
+											  validation_data=(data[2], data[3]),
+											  callbacks=cbfunctions)
 
 		plot_callback(callback_history, args.models_folder)
 

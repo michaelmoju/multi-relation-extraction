@@ -8,8 +8,6 @@ import word_embeddings
 from dataIO import io
 from dataIO.annotation import *
 
-config = config.define_config()
-
 module_location = os.path.abspath(__file__)
 module_location = os.path.dirname(module_location)
 
