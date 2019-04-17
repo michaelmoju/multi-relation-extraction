@@ -54,7 +54,8 @@ if __name__ == '__main__':
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--dropout', action='store_true')
-	parser.add_argument('--models_folder', default="./trainedmodels/")
+	parser.add_argument('--models_folder', default="./trainedmodels/entity/")
+	parser.add_argument('--entity_folder', default='./trainedmodels/relation/')
 	args = parser.parse_args()
 
 	embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
@@ -127,7 +128,7 @@ if __name__ == '__main__':
 		val_y_properties_one_hot = to_one_hot(val_as_indices[-1], n_out)
 
 		test_y_properties_one_hot = to_one_hot(test_as_indices[-1], n_out)
-		entity_model = models.load_model(args.models_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
+		entity_model = models.load_model(args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
 
 		entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
 
