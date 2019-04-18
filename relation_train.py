@@ -98,7 +98,6 @@ if __name__ == '__main__':
 				raise NameError
 
 			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['relation_type_n'])
-			exit(0)
 		else:
 			raise NameError
 
