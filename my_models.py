@@ -162,20 +162,14 @@ def r_to_indices_position_e(instances, word2idx):
 	arg2_matrix = np.zeros((len(instances), max_sent_len), dtype="int8")
 	y_matrix = np.zeros((len(instances), 1), dtype="int16")  # relation type 1~7
 
-	for index, r in enumerate(instances):
+	for index, instance in enumerate(instances):
 
-		token_wordvec_ids = word_embeddings.get_idx_sequence(r.sentence.to_words(), word2idx)
-		sentences_matrix[index, :len(token_wordvec_ids)] = token_wordvec_ids
+		sentences_matrix[index, :] = instance.get_word_idx(p['max_sent_len'], word2idx)
 
-		arg1_matrix[index, :len(token_wordvec_ids)] = 1
-		arg2_matrix[index, :len(token_wordvec_ids)] = 1
+		arg1_matrix[index, :len(instance.get_tokens())], arg2_matrix[index, :len(instance.get_tokens())] = \
+			instance.get_label_position()
 
-		arg1_matrix[index, range(r["mentionArg1"]["start"], r["mentionArg1"]["end"]+1)] = 2
-		arg2_matrix[index, range(r["mentionArg2"]["start"], r["mentionArg2"]["end"]+1)] = 2
-
-		relation_type = r["relationType"]
-		relation_type_id = r_label2idx.get(relation_type)
-		y_matrix[index] = relation_type_id
+		y_matrix[index] = r_label2idx.get(instance.type)
 
 	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
 

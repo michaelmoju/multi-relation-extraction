@@ -1,5 +1,4 @@
 import os
-import json
 from miwaIO.io_miwa import read_so, read_annot, check_no_nested_entity_mentions
 from miwaIO.instance import *
 from tensorflow.keras import utils
@@ -66,9 +65,9 @@ def load_relation_instances_from_file(dir, docID):
 	mysents = read_so(dir+docID +'.split.stanford.so')
 
 	for r_mention in relation_mentions.values():
-		out_instances.append(load_relation_instance(r_mention, entity_mentions, mysents))
-
-	out_instances.remove(None)
+		r_instance = load_relation_instance(r_mention, entity_mentions, mysents)
+		if r_instance:
+			out_instances.append(r_instance)
 
 	return out_instances
 
@@ -178,6 +177,3 @@ if __name__ == '__main__':
 	# print(out_instances[0].type)
 	# print(out_instances[0].arg1.words)
 	# print(out_instances[0].arg2.words)
-
-
-

@@ -1,7 +1,3 @@
-import numpy as np
-from word_embeddings import get_idx_sequence
-
-
 class EntityMention:
 	def __init__(self, id, type, start, end, words):
 		self.id = id
