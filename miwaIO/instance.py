@@ -61,8 +61,8 @@ class RelationInstance:
 		arg1_token_start, arg1_token_end = mention_to_token_span(self.arg1, self.sentence)
 		arg2_token_start, arg2_token_end = mention_to_token_span(self.arg2, self.sentence)
 
-		arg1_array[arg1_token_start:arg1_token_end] = 2
-		arg2_array[arg2_token_start:arg2_token_end] = 2
+		arg1_array[arg1_token_start:arg1_token_end+1] = 2
+		arg2_array[arg2_token_start:arg2_token_end+1] = 2
 
 		return arg1_array, arg2_array
 

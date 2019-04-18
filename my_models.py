@@ -171,6 +171,9 @@ def r_to_indices_position_e(instances, word2idx):
 
 		y_matrix[index] = r_label2idx.get(instance.type)
 
+	print(arg1_matrix[0])
+	print(arg2_matrix[0])
+
 	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
 
 
