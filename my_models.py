@@ -57,7 +57,7 @@ def model_relation_LSTMbaseline(embeddings):
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
 
 	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
-	adamopt = tf.optimizers.Adam(p['learning_rate'])
+	adamopt = tf.keras.optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
 	entity_weights = model.get_layer(name='entity_BiLSTM_layer').get_weights()
 	print('embedding_layer dtype:{}'.format(model.get_layer(name='embedding_layer').dtype))
-	model = model_relation(embeddings, entity_weights)
+	model = model_relation_LSTMbaseline(embeddings)
 	print(model.summary())
 	utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
 

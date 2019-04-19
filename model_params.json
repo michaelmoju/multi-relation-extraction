@@ -7,7 +7,7 @@
   "batch_size": 128,
   "property2idx": "property2idx.txt",
   "entity_type_property2idx": "entity_type_property2idx.txt",
-  "max_sent_len": 200,
+  "max_sent_len": 120,
   "entity_type_n": 29,
   "relation_type_n": 7
 }
