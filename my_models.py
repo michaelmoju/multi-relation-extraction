@@ -1,7 +1,6 @@
 import os
 import json
-import tensorflow as tf
-from tensorflow.keras import layers, Model, utils, optimizers
+from tensorflow.python.keras import layers, Model, utils, optimizers
 import numpy as np
 
 import word_embeddings
