@@ -1,7 +1,7 @@
 import os
 import json
 import tensorflow as tf
-from tensorflow.keras import layers, Model, utils
+from tensorflow.keras import layers, Model, utils, optimizers
 import numpy as np
 
 import word_embeddings
@@ -57,7 +57,7 @@ def model_relation_LSTMbaseline(embeddings):
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
 
 	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
-	adamopt = tf.keras.optimizers.Adam(p['learning_rate'])
+	adamopt = optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
@@ -107,7 +107,7 @@ def model_relation_multi(embeddings, entity_weights, train_entity=False, dropout
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
 
 	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
-	adamopt = tf.optimizers.Adam(p['learning_rate'])
+	adamopt = optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
@@ -134,7 +134,7 @@ def model_entity(embeddings, dropout=False):
 	main_out = layers.Dense(p['entity_type_n'], activation='softmax', name='entity_softmax_layer')(lstm_out)
 
 	model = Model(inputs=sentence_input, outputs=main_out)
-	adamopt = tf.optimizers.Adam(p['learning_rate'])
+	adamopt = optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
