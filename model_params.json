@@ -9,5 +9,6 @@
   "entity_type_property2idx": "entity_type_property2idx.txt",
   "max_sent_len": 120,
   "entity_type_n": 29,
-  "relation_type_n": 7
+  "relation_type_n": 7,
+  "entity_max_len": 5
 }

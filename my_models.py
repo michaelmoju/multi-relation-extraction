@@ -1,5 +1,6 @@
 import os
 import json
+import tensorflow as tf
 from tensorflow.python.keras import layers, Model, utils, optimizers
 import numpy as np
 
@@ -52,15 +53,60 @@ def model_relation_LSTMbaseline(embeddings):
 
 	concate = layers.concatenate([word_embeddings, arg1_pos_embeddings, arg2_pos_embeddings])
 	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
+	print(type(lstm2_out))
 	# TODO: dropout
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
-
+	print("--------{}".format(type(main_out)))
 	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
 	adamopt = optimizers.Adam(p['learning_rate'])
 	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
 
 	return model
 
+
+def model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, dropout=False):
+	print('\nStart model_relation_entity_LSTM...')
+	print('word_embedding_shape:{}'.format(embeddings.shape))
+
+	sentence_input = layers.Input((p['max_sent_len'],), dtype='int32', name='sentence_input')
+	word_embeddings = layers.Embedding(embeddings.shape[0], embeddings.shape[1],
+									   weights=[embeddings],
+									   input_length=p['max_sent_len'],
+									   trainable=False,
+									   mask_zero=True,
+									   name='embedding_layer')(sentence_input)
+
+	if train_entity:
+		lstm1_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'),
+										 name='entity_BiLSTM_layer')(word_embeddings)
+	else:
+		lstm1_out = layers.Bidirectional(
+			layers.LSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'), weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
+	if dropout:
+		lstm1_out = layers.Dropout(p['dropout'])(lstm1_out)
+
+	entity_class = layers.Dense(p['entity_type_n'], activation='softmax', name='entity_softmax_layer')(lstm1_out)
+
+	arg_lstm = layers.LSTM(p['lstm2'])
+
+	arg1_input = layers.Input((p['max_sent_len'], 256), dtype='int8', name='arg1_indicate')
+	arg1_indicate = tf.cast(arg1_input, dtype='float32')
+	arg1 = layers.Multiply()([arg1_indicate, lstm1_out])
+	arg1_out = arg_lstm(arg1)
+
+	arg2_input = layers.Input((p['max_sent_len'], 256), dtype='int8', name='arg1_indicate')
+	arg2_indicate = tf.cast(arg2_input, dtype='float32')
+	arg2 = layers.Multiply()([arg2_indicate, lstm1_out])
+	arg2_out = arg_lstm(arg2)
+
+	arg_out = layers.concatenate([arg1_out, arg2_out])
+	print(type(arg_out))
+	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(arg_out)
+	model = Model(inputs=[sentence_input, arg1_input, arg2_input], outputs=[main_out])
+	adamopt = optimizers.Adam(p['learning_rate'])
+	model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
+
+	return model
 
 def model_relation_multi(embeddings, entity_weights, train_entity=False, dropout=False):
 	print('\nStart model_relation... Train_entity:{}'.format(train_entity))
@@ -181,9 +227,13 @@ if __name__ == '__main__':
 	utils.plot_model(model, './trainedmodels/entity_model.png', show_shapes=True)
 
 	entity_weights = model.get_layer(name='entity_BiLSTM_layer').get_weights()
-	print('embedding_layer dtype:{}'.format(model.get_layer(name='embedding_layer').dtype))
-	model = model_relation_LSTMbaseline(embeddings)
+	# print('embedding_layer dtype:{}'.format(model.get_layer(name='embedding_layer').dtype))
+	# model = model_relation_LSTMbaseline(embeddings)
+	# print(model.summary())
+	# utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
+
+
+	model = model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, dropout=False)
 	print(model.summary())
-	utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
 
 
