@@ -1,7 +1,7 @@
 import word_embeddings
 from miwaIO.load import *
 import my_models
-from tensorflow.keras import models, callbacks, utils, optimizers
+from tensorflow.python.keras import models, callbacks, utils, optimizers
 import matplotlib.pyplot as plt
 
 p = my_models.p

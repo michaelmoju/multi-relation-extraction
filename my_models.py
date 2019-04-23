@@ -1,7 +1,7 @@
 import os
 import json
 import tensorflow as tf
-from tensorflow.python.keras import layers, Model, utils, optimizers
+from tensorflow.python.keras import layers, Model, utils, regularizers
 import numpy as np
 
 import word_embeddings
@@ -43,20 +43,22 @@ def model_relation_LSTMbaseline(embeddings):
 	arg1_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg1_markers')
 	arg1_pos_embeddings = layers.Embedding(POSITION_VOCAB_SIZE, p['position_emb'],
 										   input_length=p['max_sent_len'],
-										   mask_zero=True, trainable=True)(arg1_markers)
+										   mask_zero=True,
+										   embeddings_regularizer=regularizers.l2(),
+										   trainable=True)(arg1_markers)
 
 	# Take arg2_markers that identify entity positions, convert to position embeddings
 	arg2_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg2_markers')
 	arg2_pos_embeddings = layers.Embedding(POSITION_VOCAB_SIZE, p['position_emb'],
 										   input_length=p['max_sent_len'],
-										   mask_zero=True, trainable=True)(arg2_markers)
+										   mask_zero=True,
+										   embeddings_regularizer=regularizers.l2(),
+										   trainable=True)(arg2_markers)
 
 	concate = layers.concatenate([word_embeddings, arg1_pos_embeddings, arg2_pos_embeddings])
 	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
-	print(type(lstm2_out))
-	# TODO: dropout
+	lstm2_out = layers.Dropout(p['dropout'])(lstm2_out)
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
-	print("--------{}".format(type(main_out)))
 	model = Model(inputs=[sentence_input, arg1_markers, arg2_markers], outputs=[main_out])
 
 	return model
@@ -101,7 +103,6 @@ def model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, d
 	arg2_out = arg_lstm(arg2)
 
 	arg_out = layers.concatenate([arg1_out, arg2_out])
-	print(type(arg_out))
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(arg_out)
 	model = Model(inputs=[sentence_input, arg1_input, arg2_input], outputs=[main_out])
 
