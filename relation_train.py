@@ -114,7 +114,6 @@ if __name__ == '__main__':
 			raise NameError
 		adamopt = optimizers.Adam(args.learning_rate)
 		model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
-+
 
 		callback_history = model.fit(data[0], data[1],
 											  epochs=args.epoch,
