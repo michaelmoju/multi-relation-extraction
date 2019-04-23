@@ -18,8 +18,8 @@ def prediction(model, data_input):
 def plot_callback(callback_history, models_folder):
 
 	# Plot training & validation accuracy values
-	plt.plot(callback_history.history['accuracy'])
-	plt.plot(callback_history.history['val_accuracy'])
+	plt.plot(callback_history.history['acc'])
+	plt.plot(callback_history.history['val_acc'])
 	plt.title('Model accuracy')
 	plt.ylabel('Accuracy')
 	plt.xlabel('Epoch')
@@ -46,15 +46,16 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['train-entity', 'train-relation', 'evaluate', 'predict'])
-	parser.add_argument('--epoch', default=50, type=int)
+	parser.add_argument('--epoch', default=1, type=int)
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--dropout', action='store_true')
 	parser.add_argument('--pretrain', action='store_true')
-	parser.add_argument('--models_folder', default="./trainedmodels/entity/")
-	parser.add_argument('--entity_folder', default='./trainedmodels/relation/')
+	parser.add_argument('--models_folder', default="./trainedmodels/entity4/")
+	parser.add_argument('--entity_folder', default='./trainedmodels/entity4/')
+	parser.add_argument('--train_entity', action='store_true')
 	args = parser.parse_args()
 
 	embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
@@ -93,6 +94,17 @@ if __name__ == '__main__':
 
 				to_indices = my_models.r_to_indices_type_e
 				model = my_models.model_relation_multi(embeddings, entity_weights)
+			elif model_name == 'model_relation_entity_LSTM':
+				entity_model = models.load_model(
+					args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")
+				entity_weights = entity_model.get_layer(name='entity_BiLSTM_layer').get_weights()
+
+				if args.train_entity:
+					to_indices = my_models.r_to_indices_e_mat_train_entity
+					model = my_models.model_relation_entity_LSTM(embeddings, entity_weights, train_entity=True, dropout=False)
+				else:
+					to_indices = my_models.r_to_indices_e_mat
+					model = my_models.model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, dropout=False)
 
 			else:
 				raise NameError

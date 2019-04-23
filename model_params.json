@@ -10,5 +10,6 @@
   "max_sent_len": 120,
   "entity_type_n": 29,
   "relation_type_n": 7,
-  "entity_max_len": 5
+  "entity_max_len": 5,
+  "word_emb": 50
 }

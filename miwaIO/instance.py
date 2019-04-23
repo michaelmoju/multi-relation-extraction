@@ -65,6 +65,22 @@ class RelationInstance:
 		arg2_array[arg2_token_start:arg2_token_end+1] = 2
 
 		return arg1_array, arg2_array
+	
+	def get_one_hot_position(self, p, train_entity):
+		if train_entity:
+			arg1_array = np.zeros((p['max_sent_len'], p['lstm2']*2))
+			arg2_array = np.zeros((p['max_sent_len'], p['lstm2']*2))
+		else:
+			arg1_array = np.zeros((p['max_sent_len'], p['word_emb']))
+			arg2_array = np.zeros((p['max_sent_len'], p['word_emb']))
+		
+		arg1_token_start, arg1_token_end = mention_to_token_span(self.arg1, self.sentence)
+		arg2_token_start, arg2_token_end = mention_to_token_span(self.arg2, self.sentence)
+		
+		arg1_array[arg1_token_start:arg1_token_end + 1, :] = 1
+		arg2_array[arg2_token_start:arg2_token_end + 1, :] = 1
+		
+		return arg1_array, arg2_array
 
 	def get_tokens(self):
 		return [t.word for t in self.sentence.tokens]

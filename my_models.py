@@ -77,11 +77,16 @@ def model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, d
 									   name='embedding_layer')(sentence_input)
 
 	if train_entity:
-		lstm1_out = layers.Bidirectional(layers.LSTM(p['lstm1'], return_sequences=True, name='entity_LSTM_layer'),
-										 name='entity_BiLSTM_layer')(word_embeddings)
-	else:
 		lstm1_out = layers.Bidirectional(
-			layers.LSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'), weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
+			layers.LSTM(p['lstm1'], return_sequences=True, trainable=False, name='entity_LSTM_layer'),
+			weights=entity_weights, name='entity_BiLSTM_layer')(word_embeddings)
+		arg1_input = layers.Input((p['max_sent_len'], p['lstm2']*2), dtype='float32', name='arg1_input')
+		arg2_input = layers.Input((p['max_sent_len'], p['lstm2']*2), dtype='float32', name='arg2_input')
+	else:
+		lstm1_out = word_embeddings
+		arg1_input = layers.Input((p['max_sent_len'], p['word_emb']), dtype='float32', name='arg1_indicate')
+		arg2_input = layers.Input((p['max_sent_len'], p['word_emb']), dtype='float32', name='arg2_indicate')
+		
 	if dropout:
 		lstm1_out = layers.Dropout(p['dropout'])(lstm1_out)
 
@@ -89,14 +94,12 @@ def model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, d
 
 	arg_lstm = layers.LSTM(p['lstm2'])
 
-	arg1_input = layers.Input((p['max_sent_len'], 256), dtype='int8', name='arg1_indicate')
-	arg1_indicate = tf.cast(arg1_input, dtype='float32')
-	arg1 = layers.Multiply()([arg1_indicate, lstm1_out])
+	arg1 = layers.Multiply()([arg1_input, lstm1_out])
+	arg1 = layers.Masking(mask_value=0)(arg1)
 	arg1_out = arg_lstm(arg1)
 
-	arg2_input = layers.Input((p['max_sent_len'], 256), dtype='int8', name='arg1_indicate')
-	arg2_indicate = tf.cast(arg2_input, dtype='float32')
-	arg2 = layers.Multiply()([arg2_indicate, lstm1_out])
+	arg2 = layers.Multiply()([arg2_input, lstm1_out])
+	arg2 = layers.Masking(mask_value=0)(arg2)
 	arg2_out = arg_lstm(arg2)
 
 	arg_out = layers.concatenate([arg1_out, arg2_out])
@@ -218,6 +221,40 @@ def r_to_indices_position_e(instances, word2idx):
 
 	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
 
+def r_to_indices_e_mat(instances, word2idx):
+	max_sent_len = p['max_sent_len']  # 120
+	sentences_matrix = np.zeros((len(instances), max_sent_len), dtype="int32")  # (sentence_number, sentence_len)
+	arg1_matrix = np.zeros((len(instances), max_sent_len, p['word_emb']), dtype="int8")
+	arg2_matrix = np.zeros((len(instances), max_sent_len, p['word_emb']), dtype="int8")
+	y_matrix = np.zeros((len(instances), 1), dtype="int16")  # relation type 1~7
+	
+	for index, instance in enumerate(instances):
+		sentences_matrix[index, :] = instance.get_word_idx(p['max_sent_len'], word2idx)
+		
+		arg1_matrix[index, :, :], arg2_matrix[index, :, :] = instance.get_one_hot_position(p, train_entity=False)
+		
+		y_matrix[index] = r_label2idx.get(instance.type)
+	
+	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
+
+
+def r_to_indices_e_mat_train_entity(instances, word2idx):
+	max_sent_len = p['max_sent_len']  # 120
+	sentences_matrix = np.zeros((len(instances), max_sent_len), dtype="int32")  # (sentence_number, sentence_len)
+	arg1_matrix = np.zeros((len(instances), max_sent_len, p['lstm2'] * 2), dtype="int8")
+	arg2_matrix = np.zeros((len(instances), max_sent_len, p['lstm2'] * 2), dtype="int8")
+
+	y_matrix = np.zeros((len(instances), 1), dtype="int16")  # relation type 1~7
+	
+	for index, instance in enumerate(instances):
+		sentences_matrix[index, :] = instance.get_word_idx(p['max_sent_len'], word2idx)
+		
+		arg1_matrix[index, :, :], arg2_matrix[index, :, :] = instance.get_one_hot_position(p, train_entity=True)
+		
+		y_matrix[index] = r_label2idx.get(instance.type)
+	
+	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
+
 
 if __name__ == '__main__':
 
@@ -232,8 +269,8 @@ if __name__ == '__main__':
 	# print(model.summary())
 	# utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
 
-
-	model = model_relation_entity_LSTM(embeddings, entity_weights, train_entity=False, dropout=False)
+	model = model_relation_entity_LSTM(embeddings, entity_weights, train_entity=True, dropout=False)
 	print(model.summary())
+	utils.plot_model(model, './trainedmodels/relation_model1.png', show_shapes=True)
 
 
