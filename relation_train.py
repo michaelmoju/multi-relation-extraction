@@ -1,7 +1,7 @@
 import word_embeddings
 from miwaIO.load import *
 import my_models
-from tensorflow.keras import models, callbacks, utils
+from tensorflow.keras import models, callbacks, utils, optimizers
 import matplotlib.pyplot as plt
 
 p = my_models.p
@@ -52,10 +52,10 @@ if __name__ == '__main__':
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--dropout', action='store_true')
-	parser.add_argument('--pretrain', action='store_true')
 	parser.add_argument('--models_folder', default="./trainedmodels/entity4/")
 	parser.add_argument('--entity_folder', default='./trainedmodels/entity4/')
 	parser.add_argument('--train_entity', action='store_true')
+	parser.add_argument('--learning_rate', default='0.001', type=float)
 	args = parser.parse_args()
 
 	embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
@@ -112,6 +112,9 @@ if __name__ == '__main__':
 			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['relation_type_n'])
 		else:
 			raise NameError
+		adamopt = optimizers.Adam(args.learning_rate)
+		model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
++
 
 		callback_history = model.fit(data[0], data[1],
 											  epochs=args.epoch,

@@ -1,5 +1,4 @@
 {
-  "learning_rate": 0.01,
   "lstm1": 128,
   "lstm2": 128,
   "dropout": 0.5,
