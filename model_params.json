@@ -2,6 +2,7 @@
   "lstm1": 128,
   "lstm2": 128,
   "dropout": 0.5,
+  "units1": 128,
   "position_emb": 3,
   "batch_size": 128,
   "property2idx": "property2idx.txt",
@@ -10,5 +11,7 @@
   "entity_type_n": 29,
   "relation_type_n": 7,
   "entity_max_len": 5,
-  "word_emb": 50
+  "word_emb": 50,
+  "bidirectional": "False",
+  "rnn1_layers": 2
 }

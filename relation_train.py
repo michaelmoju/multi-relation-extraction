@@ -3,6 +3,7 @@ from miwaIO.load import *
 import my_models
 from tensorflow.python.keras import models, callbacks, utils, optimizers
 import matplotlib.pyplot as plt
+import bert
 
 p = my_models.p
 
@@ -13,6 +14,10 @@ def prediction(model, data_input):
 	predictions_classes = np.argmax(predictions, axis=-1)
 
 	return predictions_classes
+
+
+def evaluate(model, data_input, gold_output):
+	pass
 
 
 def plot_callback(callback_history, models_folder):
@@ -123,6 +128,25 @@ if __name__ == '__main__':
 											  callbacks=cbfunctions)
 
 		plot_callback(callback_history, args.models_folder)
+		
+	
+	elif mode == "eval":
+
+		print("Loading the best model")
+		model = models.load_model(args.models_folder + model_name + "-" + args.metadata + ".kerasmodel")
+
+		train_y_properties_one_hot = to_one_hot(train_as_indices[-1], n_out)
+		val_y_properties_one_hot = to_one_hot(val_as_indices[-1], n_out)
+
+		test_y_properties_one_hot = to_one_hot(test_as_indices[-1], n_out)
+
+		score = model.evaluate(train_as_indices[:-1], train_y_properties_one_hot)
+		print("Results on the training set:", score[0], score[1])
+		score = model.evaluate(val_as_indices[:-1], val_y_properties_one_hot)
+		print("Results on the validation set: ", score[0], score[1])
+		score = model.evaluate(test_as_indices[:-1], test_y_properties_one_hot)
+		print("Results on the testing set: ", score[0], score[1])
+		
 
 	elif mode == 'summary':
 		model = getattr(my_models, model_name)(embeddings)
