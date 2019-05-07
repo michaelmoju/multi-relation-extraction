@@ -145,6 +145,14 @@ class SentenceRelationInstance:
 					if e_tuple[0].words != e_tuple[1].words:
 						self.relation_ext_lst.append(RelationExtInstance('NONE', e_tuple[0], e_tuple[1], self.sentence))
 						e_tuple_check_lst.append(e_tuple)
+						
+				e_tuple = (self.entity_lst[arg2_idx], self.entity_lst[arg1_idx])
+				if e_tuple not in e_tuple_check_lst:
+					
+					# **Ignore the same-word entity pairs
+					if e_tuple[0].words != e_tuple[1].words:
+						self.relation_ext_lst.append(RelationExtInstance('NONE', e_tuple[0], e_tuple[1], self.sentence))
+						e_tuple_check_lst.append(e_tuple)
 					
 	def dump(self):
 		print('Sentence:')
