@@ -1,5 +1,6 @@
 import sys
 import re
+import os
 from miwaIO.sentence import Token, Sentence
 from miwaIO.annotation import *
 
@@ -17,7 +18,7 @@ def read_so(fh):
 					out_sents.append(mySent)
 					del mySent
 				start, end, _, id, _ = data
-				mySent = Sentence(start, end, id[4:-1])
+				mySent = Sentence(start, end, id[4:-1], os.path.basename(f.name))
 			elif len(data) == 7:
 				start, end, _, id, word, _, _ = data
 				myToken = Token(start, end, id[4:-1], word[6:-1])
@@ -25,6 +26,9 @@ def read_so(fh):
 			else:
 				print("len(data):{}".format(len(data)))
 				sys.stderr.write("read_so error!")
+		if mySent:
+			out_sents.append(mySent)
+			del mySent
 	return out_sents
 
 
@@ -72,10 +76,11 @@ def check_no_nested_entity_mentions(entity_mentions, docID):
 if __name__ == '__main__':
 	mysents = read_so("/media/moju/data/work/resource/data/ace-2005/miwa2016/corpus/dev/AFP_ENG_20030327.0224.split.stanford.so")
 	print(len(mysents))
+	print(mysents[0].docID)
 
 	entity_mentions, relation_mentions = read_annot("/media/moju/data/work/resource/data/ace-2005/miwa2016/corpus/dev/AFP_ENG_20030327.0224.split.ann")
 
-	check_no_nested_entity_mentions(entity_mentions)
+	check_no_nested_entity_mentions(entity_mentions, "AFP_ENG_20030327.0224.split.ann")
 
 
 

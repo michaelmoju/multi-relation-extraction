@@ -205,7 +205,7 @@ def r_to_indices_position_e(instances, word2idx):
 	sentences_matrix = np.zeros((len(instances), max_sent_len), dtype="int32")  # (sentence_number, sentence_len)
 	arg1_matrix = np.zeros((len(instances), max_sent_len), dtype="int8")
 	arg2_matrix = np.zeros((len(instances), max_sent_len), dtype="int8")
-	y_matrix = np.zeros((len(instances), 1), dtype="int16")  # relation type 1~7
+	y_matrix = np.zeros((len(instances), 1), dtype="int16")
 	
 	for index, instance in enumerate(instances):
 		sentences_matrix[index, :] = instance.get_word_idx(p['max_sent_len'], word2idx)
@@ -213,7 +213,7 @@ def r_to_indices_position_e(instances, word2idx):
 		arg1_matrix[index, :len(instance.get_tokens())], arg2_matrix[index, :len(instance.get_tokens())] = \
 			instance.get_label_position()
 		
-		y_matrix[index] = r_label2idx.get(instance.type)
+		y_matrix[index] = instance.get_type_label()
 	
 	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
 
@@ -230,7 +230,7 @@ def r_to_indices_e_mat(instances, word2idx):
 		
 		arg1_matrix[index, :, :], arg2_matrix[index, :, :] = instance.get_one_hot_position(p, train_entity=False)
 		
-		y_matrix[index] = r_label2idx.get(instance.type)
+		y_matrix[index] = r_label2idx[instance.type]
 	
 	return sentences_matrix, arg1_matrix, arg2_matrix, y_matrix
 

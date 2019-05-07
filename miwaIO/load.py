@@ -1,7 +1,7 @@
 import os
 from miwaIO.io_miwa import read_so, read_annot, check_no_nested_entity_mentions
 from miwaIO.instance import *
-from tensorflow.keras import utils
+from tensorflow.python.keras import utils
 
 
 def load_entity_instance(mentions, sent):
@@ -32,6 +32,38 @@ def load_relation_instance(r_mention, e_mentions, sents):
 				assert sent.start <= arg2.end <= sent.end
 
 				return RelationInstance(sent, r_mention.type, arg1, arg2)
+			
+
+def load_sentence_relation_instance(sent, r_mentions, e_mentions):
+	entity_lst = []
+	for e in e_mentions.values():
+		if sent.start <= e.start <= sent.end:
+			assert sent.start <= e.end <= sent.end
+			assert sent.start <= e.start <= sent.end
+			assert sent.start <= e.end <= sent.end
+			entity_lst.append(e)
+	
+	relation_lst = []
+	for r in r_mentions.values():
+		arg1 = e_mentions[r.arg1]
+		arg2 = e_mentions[r.arg2]
+		
+		if arg1.is_nested(arg2):
+			continue
+			# print(arg1.start)
+			# print(arg1.words)
+			# print(arg2.start)
+			# print(arg2.words)
+			# print("r_mention_id:{}".format(r.id))
+		
+		else:
+			if sent.start <= arg1.start <= sent.end:
+				assert sent.start <= arg1.end <= sent.end
+				assert sent.start <= arg2.start <= sent.end
+				assert sent.start <= arg2.end <= sent.end
+				relation_lst.append(r)
+	
+	return SentenceRelationInstance(sent, entity_lst, relation_lst, e_mentions)
 
 
 def load_entity_instances_from_file(dir, docID):
@@ -72,12 +104,16 @@ def load_relation_instances_from_file(dir, docID):
 	return out_instances
 
 
-def load_relation_instances_from_files(dir):
+def load_relation_ext_instances_from_file(dir, docID):
 	out_instances = []
-	for f in os.listdir(dir):
-		if f.endswith('.split.ann'):
-			out_instances += load_relation_instances_from_file(dir, f[:-10])
+	entity_mentions, relation_mentions = read_annot(dir + docID + '.split.ann')
+	check_no_nested_entity_mentions(entity_mentions, docID)
+	mysents = read_so(dir + docID + '.split.stanford.so')
 
+	for sent in mysents:
+		r_instance = load_sentence_relation_instance(sent, relation_mentions, entity_mentions)
+		out_instances += r_instance.relation_ext_lst
+	
 	return out_instances
 
 
@@ -86,7 +122,6 @@ def load_entity_instances_from_files(dir, max_sent=False):
 	entity_num = 0
 	relation_num = 0
 	sentence_num = 0
-
 	max_sent_token_num = 0
 
 	# TODO: load it from docIDs
@@ -117,6 +152,24 @@ def load_entity_instances_from_files(dir, max_sent=False):
 	else: return out_instances
 
 
+def load_relation_instances_from_files(dir):
+	out_instances = []
+	for f in os.listdir(dir):
+		if f.endswith('.split.ann'):
+			out_instances += load_relation_instances_from_file(dir, f[:-10])
+
+	return out_instances
+
+
+def load_relation_ext_instances_from_files(dir):
+	out_instances = []
+	for f in os.listdir(dir):
+		if f.endswith('.split.ann'):
+			out_instances += load_relation_ext_instances_from_file(dir, f[:-10])
+
+	return out_instances
+
+
 def load_data_from_path(data_path, word2idx, load_instance, to_indices, type_n):
 	# get entity/relation instances
 	train_instances = load_instance(data_path + 'train/')
@@ -134,13 +187,6 @@ def load_data_from_path(data_path, word2idx, load_instance, to_indices, type_n):
 	return train_x, train_y, dev_x, dev_y, test_x, test_y
 
 if __name__ == '__main__':
-	label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
-				 'B-ORG': 5, 'I-ORG': 6, 'L-ORG': 7, 'U-ORG': 8,
-				 'B-LOC': 9, 'I-LOC': 10, 'L-LOC': 11, 'U-LOC': 12,
-				 'B-GPE': 13, 'I-GPE': 14, 'L-GPE': 15, 'U-GPE': 16,
-				 'B-FAC': 17, 'I-FAC': 18, 'L-FAC': 19, 'U-FAC': 20,
-				 'B-VEH': 21, 'I-VEH': 22, 'L-VEH': 23, 'U-VEH': 24,
-				 'B-WEA': 25, 'I-WEA': 26, 'L-WEA': 27, 'U-WEA': 28, 'O': 29}
 	# out_instances = load_entity_instances_from_file('../../resource/data/ace-2005/miwa2016/corpus/dev/', 'XIN_ENG_20030513.0002')
 	# print(out_instances[5].get_label(label2idx, 200))
 	# print(out_instances[5].get_tokens())
@@ -177,3 +223,18 @@ if __name__ == '__main__':
 	# print(out_instances[0].type)
 	# print(out_instances[0].arg1.words)
 	# print(out_instances[0].arg2.words)
+
+#=======================================================================
+	out_instances= load_relation_ext_instances_from_files(
+		'../../resource/data/ace-2005/miwa2016/corpus/dev/')
+
+	print(len(out_instances))
+
+	out_instances = load_relation_ext_instances_from_file(
+		'../../resource/data/ace-2005/miwa2016/corpus/dev/', 'AFP_ENG_20030327.0224')
+
+	print(len(out_instances))
+	
+	for instance in out_instances:
+		print(instance.get_type_label())
+

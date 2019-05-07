@@ -11,7 +11,13 @@ class EntityMention:
 			if i in range(m.start, m.end + 1):
 				return True
 		return False
-
+	
+	def __str__(self):
+		return 'words:{}\t'.format(self.words) +\
+		       'start:{}\t'.format(self.start) + \
+		       'end:{}\t'.format(self.end) + \
+		       'type:{}\n'.format(self.type)
+	
 
 class RelationMention:
 	def __init__(self, id, type, arg1, arg2):

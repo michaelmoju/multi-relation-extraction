@@ -87,7 +87,8 @@ if __name__ == '__main__':
 			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['entity_type_n'])
 
 		elif mode == 'train-relation':
-			load_instance = load_relation_instances_from_files
+			# load_instance = load_relation_instances_from_files
+			load_instance = load_relation_ext_instances_from_files
 
 			if 'LSTMbaseline' in model_name:
 				to_indices = my_models.r_to_indices_position_e
@@ -115,6 +116,9 @@ if __name__ == '__main__':
 				raise NameError
 
 			data = load_data_from_path(data_path, word2idx, load_instance, to_indices, p['relation_type_n'])
+			print("train:{}".format(len(data[1])))
+			print("dev:{}".format(len(data[3])))
+			print("test:{}".format(len(data[5])))
 		else:
 			raise NameError
 		adamopt = optimizers.Adam(args.learning_rate)
