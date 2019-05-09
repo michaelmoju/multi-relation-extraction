@@ -14,7 +14,7 @@ class Sentence:
 	
 	def __str__(self):
 		return 'id:{}\t'.format(self.id) + 'start:{}\t'.format(self.start) + 'end:{}\t'.format(self.end) +\
-		       'sentence:{}\n'.format(' '.join([t.word for t in self.tokens]))
+		       'tokens:{}\n'.format(' '.join([t.word for t in self.tokens]))
 
 
 class Token:

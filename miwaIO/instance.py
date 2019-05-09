@@ -1,6 +1,9 @@
 import numpy as np
 from word_embeddings import get_idx_sequence
 
+e_type2idx = {'X':0, 'O': 1, 'PER': 2, 'ORG': 3, 'LOC': 4, 'GPE': 5, 'FAC': 6, 'VEH': 7, 'WEA': 8}
+e_idx2type = {v: k for k, v in e_type2idx.items()}
+
 e_label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
                'B-ORG': 5, 'I-ORG': 6, 'L-ORG': 7, 'U-ORG': 8,
                'B-LOC': 9, 'I-LOC': 10, 'L-LOC': 11, 'U-LOC': 12,
@@ -121,19 +124,22 @@ class SentenceRelationInstance:
 		
 		# append the RelationExtInstance with annotated relations
 		for r in self.relation_mn_lst:
-			e1 = entity_dict[r.arg1]
-			e2 = entity_dict[r.arg2]
+			arg1 = entity_dict[r.arg1]
+			arg2 = entity_dict[r.arg2]
 			
-			# if e1.words == e2.words:
-			# 	print('found entity pair with same words!:{}'.format(e1.words+e2.words))
+			if arg1.start < arg2.start:
+				type = r.type + '-lr'
+				e1 = arg1
+				e2 = arg2
+			elif arg1.start > arg2.start:
+				type = r.type + '-rl'
+				e1 = arg2
+				e2 = arg1
+			else:
+				raise NotImplementedError
 			
-			type = r.type + '-lr'
 			self.relation_ext_lst.append(RelationExtInstance(type, e1, e2, self.sentence))
 			e_tuple_check_lst.append((e1, e2))
-			
-			type = r.type + '-rl'
-			self.relation_ext_lst.append(RelationExtInstance(type, e2, e1, self.sentence))
-			e_tuple_check_lst.append((e2, e1))
 		
 		# append the RelationExtInstance with NONE annotated relations (NONE type)
 		for arg1_idx in range(len(self.entity_lst)-1):
@@ -145,15 +151,7 @@ class SentenceRelationInstance:
 					if e_tuple[0].words != e_tuple[1].words:
 						self.relation_ext_lst.append(RelationExtInstance('NONE', e_tuple[0], e_tuple[1], self.sentence))
 						e_tuple_check_lst.append(e_tuple)
-						
-				e_tuple = (self.entity_lst[arg2_idx], self.entity_lst[arg1_idx])
-				if e_tuple not in e_tuple_check_lst:
-					
-					# **Ignore the same-word entity pairs
-					if e_tuple[0].words != e_tuple[1].words:
-						self.relation_ext_lst.append(RelationExtInstance('NONE', e_tuple[0], e_tuple[1], self.sentence))
-						e_tuple_check_lst.append(e_tuple)
-					
+
 	def dump(self):
 		print('Sentence:')
 		print(self.sentence)
@@ -173,26 +171,38 @@ class RelationExtInstance:
 	"""
 	Relation Extraction Instance: Include the NONE type and right to left or left to right relation type
 	"""
-	def __init__(self, type, arg1, arg2, sentence):
+	def __init__(self, type, e1, e2, sentence):
 		self.type = type
-		self.arg1 = arg1
-		self.arg2 = arg2
+		
+		assert e1.start <= e2.start
+		self.e1 = e1
+		self.e2 = e2
 		self.sentence = sentence
 		
 	def __str__(self):
-		return 'arg1:{}\t'.format(self.arg1) + 'arg2:{}\t'.format(self.arg2) + 'type:{}\n'.format(self.type)
+		return 'e1:{}\t'.format(self.e1) + 'e2:{}\t'.format(self.e2) + 'type:{}\n'.format(self.type)
+	
+	def get_label_entity_type(self):
+		arg_array = np.ones(len(self.sentence.tokens),)
+
+		e1_token_start, e1_token_end = mention_to_token_span(self.e1, self.sentence)
+		e2_token_start, e2_token_end = mention_to_token_span(self.e2, self.sentence)
+
+		arg_array[e1_token_start:e1_token_end+1] = e_type2idx[self.e1.type]
+		arg_array[e2_token_start:e2_token_end+1] = e_type2idx[self.e2.type]
+
+		return arg_array
 	
 	def get_label_position(self):
-		arg1_array = np.ones(len(self.sentence.tokens),)
-		arg2_array = np.ones(len(self.sentence.tokens),)
+		arg_array = np.ones(len(self.sentence.tokens),)
 
-		arg1_token_start, arg1_token_end = mention_to_token_span(self.arg1, self.sentence)
-		arg2_token_start, arg2_token_end = mention_to_token_span(self.arg2, self.sentence)
+		e1_token_start, e1_token_end = mention_to_token_span(self.e1, self.sentence)
+		e2_token_start, e2_token_end = mention_to_token_span(self.e2, self.sentence)
 
-		arg1_array[arg1_token_start:arg1_token_end+1] = 2
-		arg2_array[arg2_token_start:arg2_token_end+1] = 2
+		arg_array[e1_token_start:e1_token_end+1] = 2
+		arg_array[e2_token_start:e2_token_end+1] = 2
 
-		return arg1_array, arg2_array
+		return arg_array
 	
 	def get_type_label(self):
 		return r_label2idx[self.type]

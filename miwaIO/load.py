@@ -1,3 +1,4 @@
+import operator
 import os
 from miwaIO.io_miwa import read_so, read_annot, check_no_nested_entity_mentions
 from miwaIO.instance import *
@@ -62,6 +63,7 @@ def load_sentence_relation_instance(sent, r_mentions, e_mentions):
 				assert sent.start <= arg2.start <= sent.end
 				assert sent.start <= arg2.end <= sent.end
 				relation_lst.append(r)
+	entity_lst.sort(key=operator.attrgetter('start'))
 	
 	return SentenceRelationInstance(sent, entity_lst, relation_lst, e_mentions)
 
@@ -101,6 +103,19 @@ def load_relation_instances_from_file(dir, docID):
 		if r_instance:
 			out_instances.append(r_instance)
 
+	return out_instances
+
+
+def load_sentence_relation_instances_from_file(dir, docID):
+	out_instances = []
+	entity_mentions, relation_mentions = read_annot(dir + docID + '.split.ann')
+	check_no_nested_entity_mentions(entity_mentions, docID)
+	mysents = read_so(dir + docID + '.split.stanford.so')
+	
+	for sent in mysents:
+		r_instance = load_sentence_relation_instance(sent, relation_mentions, entity_mentions)
+		out_instances.append(r_instance)
+	
 	return out_instances
 
 
@@ -158,6 +173,15 @@ def load_relation_instances_from_files(dir):
 		if f.endswith('.split.ann'):
 			out_instances += load_relation_instances_from_file(dir, f[:-10])
 
+	return out_instances
+
+
+def load_sentence_relation_instances_from_files(dir):
+	out_instances = []
+	for f in os.listdir(dir):
+		if f.endswith('.split.ann'):
+			out_instances += load_sentence_relation_instances_from_file(dir, f[:-10])
+	
 	return out_instances
 
 
@@ -230,11 +254,11 @@ if __name__ == '__main__':
 
 	print(len(out_instances))
 
-	out_instances = load_relation_ext_instances_from_file(
+	out_instances = load_sentence_relation_instances_from_file(
 		'../../resource/data/ace-2005/miwa2016/corpus/dev/', 'AFP_ENG_20030327.0224')
 
 	print(len(out_instances))
-	
-	for instance in out_instances:
-		print(instance.get_type_label())
+	#
+	# for instance in out_instances:
+	# 	instance.dump()
 
