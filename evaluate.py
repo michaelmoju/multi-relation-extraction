@@ -65,8 +65,8 @@ def evaluate_relation(model, labels, x):
 	print(set(predictions))
 	print(set(labels))
 	
-	print("Macro F:{}".format(compute_macro_PRF(predictions, labels)))
-	print("Micro F:{}".format(compute_micro_PRF(predictions, labels)))
+	print("Macro F:{}".format(compute_macro_PRF(predictions, labels, empty_label=0)))
+	print("Micro F:{}".format(compute_micro_PRF(predictions, labels, empty_label=0)))
 	
 	
 def evaluate_entity(model, labels, x):
@@ -115,9 +115,13 @@ if __name__ == '__main__':
 		evaluate_entity(model, data[5], data[4])
 	
 	elif mode == 'relation':
-		load_instance = load_relation_instances_from_files
+		# load_instance = load_relation_instances_from_files
+		load_instance = load_relation_ext_instances_from_files
 		
 		if 'LSTMbaseline' in model_name:
+			to_indices = my_models.r_to_indices_position_e
+		
+		elif 'LSTMtype' in model_name:
 			to_indices = my_models.r_to_indices_position_e
 		
 		elif 'multi' in model_name:
