@@ -26,6 +26,14 @@ r_idx2label = {v: k for k, v in r_label2idx.items()}
 POSITION_VOCAB_SIZE = 3
 
 
+def load_eType_embeddings():
+	embeddings = np.zeros((9, 8), dtype='float32')
+	
+	for i in range(1, 9):
+		embeddings[i, i - 1] = 1
+	return embeddings
+
+
 def model_relation_LSTMbaseline(embeddings):
 	print('\nStart model_relation_LSTMbaseline...')
 	print('word_embedding_shape:{}'.format(embeddings.shape))
@@ -293,15 +301,20 @@ def r_to_indices_e_mat_train_entity(instances, word2idx):
 
 if __name__ == '__main__':
 	embeddings, word2idx = word_embeddings.load_word_emb('../resource/embeddings/glove/glove.6B.50d.txt')
-	model = model_entity(embeddings, dropout=True)
-	print(model.summary())
-	utils.plot_model(model, './trainedmodels/entity_model.png', show_shapes=True)
-	
-	entity_weights = model.get_layer(name='entity_BiLSTM_layer').get_weights()
-	# print('embedding_layer dtype:{}'.format(model.get_layer(name='embedding_layer').dtype))
-	# model = model_relation_LSTMbaseline(embeddings)
+	# model = model_entity(embeddings, dropout=True)
 	# print(model.summary())
-	# utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
+	# utils.plot_model(model, './trainedmodels/entity_model.png', show_shapes=True)
+	#
+	# entity_weights = model.get_layer(name='entity_BiLSTM_layer').get_weights()
+	# # print('embedding_layer dtype:{}'.format(model.get_layer(name='embedding_layer').dtype))
+	# # model = model_relation_LSTMbaseline(embeddings)
+	# # print(model.summary())
+	# # utils.plot_model(model, './trainedmodels/relation_model.png', show_shapes=True)
+	#
+	# print(model.summary())
+	# utils.plot_model(model, './trainedmodels/relation_model1.png', show_shapes=True)
 	
+	eType_embeddings = load_eType_embeddings()
+	model = model_relation_LSTMtype(embeddings, eType_embeddings)
 	print(model.summary())
 	utils.plot_model(model, './trainedmodels/relation_model1.png', show_shapes=True)

@@ -133,7 +133,7 @@ if __name__ == '__main__':
 			model = my_models.model_relation_LSTMbaseline(embeddings)
 		
 		elif 'LSTMtype' in model_name:
-			to_indices = my_models.r_to_indices_position_e
+			to_indices = my_models.r_to_indices_typed_e
 			eType_embeddings = load_eType_embeddings()
 			model = my_models.model_relation_LSTMtype(embeddings, eType_embeddings)
 
