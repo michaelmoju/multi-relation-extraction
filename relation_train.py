@@ -79,6 +79,13 @@ def plot_callback(callback_history, models_folder):
 	plt.savefig(models_folder + 'loss.png')
 	# plt.show()
 	plt.clf()
+	
+def load_eType_embeddings():
+	embeddings = np.zeros((9, 8), dtype='float32')
+	
+	for i in range(1, 9):
+		embeddings[i, i - 1] = 1
+	return embeddings
 
 
 if __name__ == '__main__':
@@ -127,7 +134,8 @@ if __name__ == '__main__':
 		
 		elif 'LSTMtype' in model_name:
 			to_indices = my_models.r_to_indices_position_e
-			model = my_models.model_relation_LSTMbaseline(embeddings)
+			eType_embeddings = load_eType_embeddings()
+			model = my_models.model_relation_LSTMtype(embeddings, eType_embeddings)
 
 		elif 'multi' in model_name:
 			entity_model = models.load_model(args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")

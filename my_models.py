@@ -57,7 +57,7 @@ def model_relation_LSTMbaseline(embeddings):
 	return model
 
 
-def model_relation_LSTMtype(embeddings):
+def model_relation_LSTMtype(embeddings, eType_embeddings):
 	print('\nStart model_relation_LSTMbaseline...')
 	print('word_embedding_shape:{}'.format(embeddings.shape))
 	
@@ -67,17 +67,18 @@ def model_relation_LSTMtype(embeddings):
 	                                   input_length=p['max_sent_len'],
 	                                   trainable=False,
 	                                   mask_zero=True,
+	                                   embeddings_regularizer=regularizers.l2(),
 	                                   name='embedding_layer')(sentence_input)
 	
 	word_embeddings = layers.Dropout(p['dropout'])(word_embeddings)
 	
 	# Take arg1_markers that identify entity positions, convert to position embeddings
 	arg_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg1_markers')
-	arg_pos_embeddings = layers.Embedding(len(e_type2idx), p['position_emb'],
+	arg_pos_embeddings = layers.Embedding(eType_embeddings.shape[0], eType_embeddings.shape[1],
+	                                      weights=[eType_embeddings],
 	                                      input_length=p['max_sent_len'],
 	                                      mask_zero=True,
-	                                      embeddings_regularizer=regularizers.l2(),
-	                                      trainable=True)(arg_markers)
+	                                      trainable=False)(arg_markers)
 	
 	concate = layers.concatenate([word_embeddings, arg_pos_embeddings])
 	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)

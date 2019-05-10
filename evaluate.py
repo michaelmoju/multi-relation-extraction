@@ -84,6 +84,14 @@ def evaluate_entity(model, labels, x):
 	print(gold_labels[100])
 	
 
+def load_eType_embeddings():
+	embeddings = np.zeros((9,8), dtype='float32')
+	
+	for i in range(1,9):
+		embeddings[i,i-1] = 1
+	return embeddings
+	
+	
 if __name__ == '__main__':
 	import argparse
 	
@@ -122,6 +130,7 @@ if __name__ == '__main__':
 			to_indices = my_models.r_to_indices_position_e
 		
 		elif 'LSTMtype' in model_name:
+			eType_embeddings = load_eType_embeddings()
 			to_indices = my_models.r_to_indices_position_e
 		
 		elif 'multi' in model_name:
