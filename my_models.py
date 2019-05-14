@@ -89,7 +89,6 @@ def model_relation_LSTMtype(embeddings, eType_embeddings):
 	                                      trainable=False)(arg_markers)
 	
 	concate = layers.concatenate([word_embeddings, arg_pos_embeddings])
-	print(concate[0,:,:].eval())
 	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
 	lstm2_out = layers.Dropout(p['dropout'])(lstm2_out)
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
