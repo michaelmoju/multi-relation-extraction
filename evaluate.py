@@ -1,12 +1,52 @@
 import word_embeddings
 from miwaIO.load import *
 import my_models
-import tensorflow as tf
-from tensorflow.python.keras import models, callbacks, utils, optimizers
+from tensorflow.python.keras import models
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from miwaIO.instance import r_label2idx
 
 p = my_models.p
 
+
+def write_to_file(fh, instance, yhat, true_class):
+	fh.write("relationID: " + instance.sentence.docID + '-' + instance.sentence.id + '\n')
+	fh.write("Sentence:{}".format(instance.sentence.to_words()) + '\n')
+	fh.write("mention1:{}".format(instance.e1) + '\n')
+	fh.write("mention2:{}".format(instance.e2) + '\n')
+	fh.write("predict: " + yhat + '\n')
+	fh.write("true: " + true_class + '\n')
+	fh.write('\n')
+	
+
+def error_analysis(label_classes, predict_classes, out_folder, val_data):
+
+	with open(out_folder+'error.txt', 'w') as e_f, open(out_folder+'valout.txt', 'w') as v_f:
+		for index, yhat in enumerate(predict_classes):
+			if yhat != label_classes[index]:
+				write_to_file(e_f, val_data[index], yhat, label_classes[index])
+			elif yhat == label_classes[index]:
+				write_to_file(v_f, val_data[index], yhat, label_classes[index])
+
+
+def plot_comfusion_matrix(label_classes, predict_classes, out_folder):
+	label_types = list(r_idx2label.values())
+
+	cm = confusion_matrix(label_classes, predict_classes, label_types)
+	print(cm)
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
+	cax = ax.matshow(cm)
+	for (i, j), z in np.ndenumerate(cm):
+		ax.text(j, i, '{:0.0f}'.format(z), ha='center', va='center', color='white')
+	fig.colorbar(cax)
+	ax.set_xticklabels([''] + label_types)
+	ax.set_yticklabels([''] + label_types)
+	plt.xlabel('Predicted')
+	plt.ylabel('True')
+	
+	plt.savefig(out_folder + 'confusion_matrix.png')
+	plt.show()
 
 def compute_micro_PRF(predicted_idx, gold_idx, i=-1, empty_label=None):
 	if i == -1:
@@ -51,26 +91,26 @@ def compute_macro_PRF(predicted_idx, gold_idx, i=-1, empty_label=None):
 	return avg_prec, avg_rec, f1
 
 
-def predict(model, data_input):
-	outs = model.predict(data_input, batch_size=my_models.p['batch_size'], verbose=1)
-	predictions = np.argmax(outs, axis=-1)
+def evaluate_relation(model, labels, x, out_folder, instances):
+	predictions = model.predict(x, batch_size=p['batch_size'], verbose=1)
+	predictions = np.argmax(predictions, axis=-1)
+	true_labels = np.argmax(labels, axis=-1)
 	
-	return predictions
-
-
-def evaluate_relation(model, labels, x):
-	predictions = predict(model, x)
-	labels = np.argmax(labels, axis=-1)
-
 	print(set(predictions))
-	print(set(labels))
+	print(set(true_labels))
 	
-	print("Macro F:{}".format(compute_macro_PRF(predictions, labels, empty_label=0)))
-	print("Micro F:{}".format(compute_micro_PRF(predictions, labels, empty_label=0)))
+	print("Macro F:{}".format(compute_macro_PRF(predictions, true_labels, empty_label=0)))
+	print("Micro F:{}".format(compute_micro_PRF(predictions, true_labels, empty_label=0)))
+	
+	label_classes = [r_idx2label.get(i) for i in true_labels]
+	predict_classes = [r_idx2label.get(i) for i in predictions]
+	
+	plot_comfusion_matrix(label_classes, predict_classes, out_folder)
+	error_analysis(label_classes, predict_classes, out_folder, instances)
 	
 	
 def evaluate_entity(model, labels, x):
-	predictions = predict(model, x)
+	predictions = model.predict(model, x)
 	labels = np.argmax(labels, axis=-1)
 	
 	pred_labels = []
@@ -98,11 +138,11 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['entity', 'relation'])
-	parser.add_argument('--out', default='./trainedmodels/eval')
+	parser.add_argument('--out', default='./trainedmodels/relation5/eval/')
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
 	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
-	parser.add_argument('--models_folder', default="./trainedmodels/entity4/")
-	parser.add_argument('--metadata', default='01', type=str)
+	parser.add_argument('--models_folder', default="./trainedmodels/relation5/")
+	parser.add_argument('--metadata', default='27', type=str)
 	parser.add_argument('--train_entity', action='store_true')
 	args = parser.parse_args()
 	
@@ -149,7 +189,8 @@ if __name__ == '__main__':
 		
 		print("Loading the best relation model...")
 		model = models.load_model(args.models_folder + model_name + "-" + args.metadata + ".kerasmodel")
-	
-		evaluate_relation(model, data[5], data[4])
+		
+		dev_instances = load_instance(data_path + 'dev/')
+		evaluate_relation(model, data[3], data[2], args.out, dev_instances)
 	else:
 		raise Exception

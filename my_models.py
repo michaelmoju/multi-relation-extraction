@@ -20,7 +20,7 @@ e_label2idx = {'B-PER': 1, 'I-PER': 2, 'L-PER': 3, 'U-PER': 4,
                'B-WEA': 25, 'I-WEA': 26, 'L-WEA': 27, 'U-WEA': 28, 'O': 0}
 e_idx2label = {v: k for k, v in e_label2idx.items()}
 
-r_label2idx = {'PHYS': 1, 'PART-WHOLE': 2, 'PER-SOC': 3, 'ORG-AFF': 4, 'ART': 5, 'GEN-AFF': 6}
+r_label2idx = {'NONE': 0, 'PHYS': 1, 'PART-WHOLE': 2, 'PER-SOC': 3, 'ORG-AFF': 4, 'ART': 5, 'GEN-AFF': 6}
 r_idx2label = {v: k for k, v in r_label2idx.items()}
 
 POSITION_VOCAB_SIZE = 3
@@ -81,7 +81,7 @@ def model_relation_LSTMtype(embeddings, eType_embeddings):
 	word_embeddings = layers.Dropout(p['dropout'])(word_embeddings)
 	
 	# Take arg1_markers that identify entity positions, convert to position embeddings
-	arg_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg1_markers')
+	arg_markers = layers.Input((p['max_sent_len'],), dtype='int8', name='arg_markers')
 	arg_pos_embeddings = layers.Embedding(eType_embeddings.shape[0], eType_embeddings.shape[1],
 	                                      weights=[eType_embeddings],
 	                                      input_length=p['max_sent_len'],
@@ -89,6 +89,7 @@ def model_relation_LSTMtype(embeddings, eType_embeddings):
 	                                      trainable=False)(arg_markers)
 	
 	concate = layers.concatenate([word_embeddings, arg_pos_embeddings])
+	print(concate[0,:,:].eval())
 	lstm2_out = layers.LSTM(p['lstm2'], name='relation_LSTM_layer')(concate)
 	lstm2_out = layers.Dropout(p['dropout'])(lstm2_out)
 	main_out = layers.Dense(p['relation_type_n'], activation='softmax', name='relation_softmax_layer')(lstm2_out)
@@ -257,10 +258,10 @@ def r_to_indices_typed_e(instances, word2idx):
 	for index, instance in enumerate(instances):
 		sentences_matrix[index, :] = instance.get_word_idx(p['max_sent_len'], word2idx)
 		
-		arg_matrix[index, :len(instance.get_tokens())] = instance.get_label_position()
+		arg_matrix[index, :len(instance.get_tokens())] = instance.get_label_entity_type()
 		
 		y_matrix[index] = instance.get_type_label()
-	
+		
 	return sentences_matrix, arg_matrix, y_matrix
 
 
