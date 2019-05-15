@@ -168,6 +168,11 @@ if __name__ == '__main__':
 	if 'train' in mode:
 		adamopt = optimizers.Adam(args.learning_rate)
 		model.compile(optimizer=adamopt, loss='categorical_crossentropy', metrics=['accuracy'])
+		
+		print(data[0][0][10])
+		print(data[0][1][10])
+		print(data[1][0][10])
+		exit(1)
 	
 		callback_history = model.fit(data[0], data[1],
 											  epochs=args.epoch,

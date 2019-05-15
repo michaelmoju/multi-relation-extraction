@@ -1,6 +1,5 @@
 import os
 import json
-from miwaIO.instance import e_type2idx
 from tensorflow.python.keras import layers, Model, utils, regularizers
 import numpy as np
 import word_embeddings

@@ -1,5 +1,6 @@
 import numpy as np
 from word_embeddings import get_idx_sequence
+import my_models
 
 e_type2idx = {'X':0, 'O': 1, 'PER': 2, 'ORG': 3, 'LOC': 4, 'GPE': 5, 'FAC': 6, 'VEH': 7, 'WEA': 8}
 e_idx2type = {v: k for k, v in e_type2idx.items()}
@@ -18,6 +19,7 @@ r_label2idx = {'PHYS-lr': 1, 'PART-WHOLE-lr': 2, 'PER-SOC-lr': 3, 'ORG-AFF-lr': 
                'NONE': 0}
 r_idx2label = {v: k for k, v in r_label2idx.items()}
 
+p = my_models.p
 
 def mention_to_token_span(m, sentence):
 	for t_index, t in enumerate(sentence.tokens):

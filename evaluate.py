@@ -171,7 +171,7 @@ if __name__ == '__main__':
 		
 		elif 'LSTMtype' in model_name:
 			eType_embeddings = load_eType_embeddings()
-			to_indices = my_models.r_to_indices_position_e
+			to_indices = my_models.r_to_indices_typed_e
 		
 		elif 'multi' in model_name:
 			to_indices = my_models.r_to_indices_type_e
