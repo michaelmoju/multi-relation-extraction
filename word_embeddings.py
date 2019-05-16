@@ -22,7 +22,8 @@ def get_idx(word, word2idx):
 	elif word.upper() in word2idx:
 		return word2idx[word.upper()]
 	elif word in special_tokens:
-		return word2idx[special_tokens[word]]
+		if special_tokens[word] in word2idx:
+			return word2idx[special_tokens[word]]
 
 	trimmed = re.sub("(^\W|\W$)", "", word)
 	if trimmed in word2idx:
