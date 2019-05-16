@@ -95,6 +95,7 @@ def load_word_emb_miwa(emb_path):
 		while split:
 			if len(split) != 201:
 				# print("error len:{}".format(len(split)))
+				idx += 1
 				split = f.readline().strip().split()
 				continue
 			if split[0] in word2idx.keys():
