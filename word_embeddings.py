@@ -78,5 +78,45 @@ def load_word_emb(emb_path):
 	return embeddings, word2idx
 
 
+def load_word_emb_miwa(emb_path):
+	word2idx = {}
+	embeddings = []
+
+	with open(emb_path, 'r', encoding='utf-8') as f:
+		voc_size, word_emb_size = f.readline().strip().split()
+		print(voc_size, word_emb_size)
+		voc_size = int(voc_size)
+		word_emb_size = int(word_emb_size)
+		
+		
+		idx = 1
+		split = f.readline().strip().split()
+		while split:
+			if len(split) != 201:
+				# print("error len:{}".format(len(split)))
+				split = f.readline().strip().split()
+				continue
+			if split[0] in word2idx.keys():
+				print("repeated word:{}".format(split[0]))
+			word2idx[split[0]] = idx
+			embeddings.append(np.array([float(num) for num in split[1:]]))
+			idx += 1
+			split = f.readline().strip().split()
+	
+	word2idx[all_zeros] = 0
+	embeddings = np.asarray([[0.0] * word_emb_size] + embeddings, dtype='float32')
+
+	unknown_emb = np.average(embeddings[idx - 101:idx - 1, :], axis=0)
+	embeddings = np.append(embeddings, [unknown_emb], axis=0)
+
+	word2idx[unknown] = idx
+
+	print('word embedding size:' + str(embeddings.shape))
+	print('word2idx size: ' + str(len(word2idx)))
+
+	return embeddings, word2idx
+
+
 if __name__ == '__main__':
-	load_word_emb('../resource/embeddings/glove/glove.6B.50d.txt')
+	# load_word_emb('../resource/embeddings/glove/glove.6B.50d.txt')
+	load_word_emb_miwa('../resource/embeddings/tticoin/wikipedia200.txt')

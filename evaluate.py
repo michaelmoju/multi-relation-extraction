@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from miwaIO.instance import r_label2idx
 
+
 p = my_models.p
 
 
@@ -20,15 +21,68 @@ def write_to_file(fh, instance, yhat, true_class):
 	
 
 def error_analysis(label_classes, predict_classes, out_folder, val_data):
-
-	with open(out_folder+'error.txt', 'w') as e_f, open(out_folder+'valout.txt', 'w') as v_f:
-		for index, yhat in enumerate(predict_classes):
-			if yhat != label_classes[index]:
-				write_to_file(e_f, val_data[index], yhat, label_classes[index])
-			elif yhat == label_classes[index]:
-				write_to_file(v_f, val_data[index], yhat, label_classes[index])
-
-
+	tp_n = 0
+	fp_n = 0
+	fn_n = 0
+	ftype_n = 0
+	fdir_n = 0
+	
+	fn_PHYS_n = 0
+	fn_PART_n = 0
+	fn_PER_n = 0
+	fn_ORG_n = 0
+	fn_ART_n = 0
+	fn_GEN_n = 0
+	
+	with open(out_folder+'fp.txt', 'w') as fp_f, open(out_folder+'tp.txt', 'w') as tp_f,\
+			open(out_folder+'fn.txt', 'w') as fn_f, open(out_folder+'ftype.txt', 'w') as ftype_f, \
+			open(out_folder+'fdir.txt', 'w') as fdir_f, open(out_folder+ 'fn_PHYS.txt', 'w') as fn_PHYS, \
+			open(out_folder+ 'fn_PART.txt', 'w') as fn_PART, open(out_folder+'fn_PER.txt', 'w') as fn_PER, \
+			open(out_folder+ 'fn_ORG.txt', 'w') as fn_ORG, open(out_folder+ 'fn_ART.txt', 'w') as fn_ART, \
+			open(out_folder+ 'fn_GEN.txt', 'w') as fn_GEN:
+		for index, predict in enumerate(predict_classes):
+			if predict != label_classes[index]:
+				if predict == 'NONE':
+					fn_n += 1
+					write_to_file(fn_f, val_data[index], predict, label_classes[index])
+					if label_classes[index][:-3] == 'PHYS':
+						fn_PHYS_n += 1
+						write_to_file(fn_PHYS, val_data[index], predict, label_classes[index])
+					elif label_classes[index][:-3] == 'PART-WHOLE':
+						fn_PART_n += 1
+						write_to_file(fn_PART, val_data[index], predict, label_classes[index])
+					elif label_classes[index][:-3] == 'PER-SOC':
+						fn_PER_n += 1
+						write_to_file(fn_PER, val_data[index], predict, label_classes[index])
+					elif label_classes[index][:-3] == 'ORG-AFF':
+						fn_ORG_n += 1
+						write_to_file(fn_ORG, val_data[index], predict, label_classes[index])
+					elif label_classes[index][:-3] == 'ART':
+						fn_ART_n += 1
+						write_to_file(fn_ART, val_data[index], predict, label_classes[index])
+					elif label_classes[index][:-3] == 'GEN-AFF':
+						fn_GEN_n += 1
+						write_to_file(fn_GEN, val_data[index], predict, label_classes[index])
+					assert fn_n == fn_PHYS_n + fn_PART_n + fn_PER_n + fn_ORG_n +fn_ART_n + fn_GEN_n
+				elif predict != 'NONE':
+					if label_classes[index] == 'NONE':
+						fp_n += 1
+						write_to_file(fp_f, val_data[index], predict, label_classes[index])
+					elif predict[:-3] == label_classes[index][:-3]:
+						fdir_n += 1
+						write_to_file(fdir_f, val_data[index], predict, label_classes[index])
+					else:
+						ftype_n += 1
+						write_to_file(ftype_f, val_data[index], predict, label_classes[index])
+			elif predict == label_classes[index]:
+				tp_n += 1
+				write_to_file(tp_f, val_data[index], predict, label_classes[index])
+	assert tp_n+fp_n+fn_n+ftype_n+fdir_n == len(label_classes)
+	total = len(label_classes)
+	print('total:{}'.format(total))
+	print('tp:{} fp:{} fn:{} fdir:{} ftype:{}'.format(tp_n,fp_n,fn_n,fdir_n, ftype_n))
+	print('tp:{} fp:{} fn:{} fdir:{} ftype:{}'.format(tp_n/total, fp_n/total, fn_n/total, fdir_n/total, ftype_n/total))
+	print('fn_PHYS_n:{} fn_PART_n:{} fn_PER_n:{} fn_ORG_n:{} fn_ART_n:{} fn_GEN_n:{}'.format(fn_PHYS_n,fn_PART_n , fn_PER_n , fn_ORG_n ,fn_ART_n , fn_GEN_n))
 def plot_comfusion_matrix(label_classes, predict_classes, out_folder):
 	label_types = list(r_idx2label.values())
 
@@ -138,19 +192,22 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('model_name')
 	parser.add_argument('mode', choices=['entity', 'relation'])
-	parser.add_argument('--out', default='./trainedmodels/relation5/eval/')
+	parser.add_argument('--out', default='./trainedmodels/relation6/eval/')
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
-	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
-	parser.add_argument('--models_folder', default="./trainedmodels/relation5/")
-	parser.add_argument('--metadata', default='27', type=str)
+	# parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
+	parser.add_argument('--embedding', default='../resource/embeddings/tticoin/wikipedia200.txt')
+	parser.add_argument('--models_folder', default="./trainedmodels/relation6/")
+	parser.add_argument('--metadata', default='33', type=str)
 	parser.add_argument('--train_entity', action='store_true')
 	args = parser.parse_args()
 	
 	mode = args.mode
 	model_name = args.model_name
 	data_path = args.data_path
-	
-	embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
+	if 'tticoin' in args.embeddings:
+		embeddings, word2idx = word_embeddings.load_word_emb_miwa(args.embedding)
+	else:
+		embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
 	
 	if mode == 'entity':
 		load_instance = load_entity_instances_from_files

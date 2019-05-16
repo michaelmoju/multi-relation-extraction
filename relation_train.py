@@ -5,7 +5,6 @@ from my_models import r_to_indices_position_e
 from tensorflow.python.keras import models, callbacks, optimizers
 import matplotlib.pyplot as plt
 from miwaIO.instance import r_idx2label, RelationExtInstance
-import bert
 
 p = my_models.p
 
@@ -96,7 +95,8 @@ if __name__ == '__main__':
 	parser.add_argument('mode', choices=['train-entity', 'train-relation', 'evaluate', 'predict'])
 	parser.add_argument('--epoch', default=1, type=int)
 	parser.add_argument('--data_path', default='../resource/data/ace-2005/miwa2016/corpus/')
-	parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
+	# parser.add_argument('--embedding', default='../resource/embeddings/glove/glove.6B.50d.txt')
+	parser.add_argument('--embedding', default='../resource/embeddings/tticoin/wikipedia200.txt')
 	parser.add_argument('--metadata', default='01', type=str)
 	parser.add_argument('--checkpoint', action='store_true')
 	parser.add_argument('--dropout', action='store_true')
@@ -105,9 +105,12 @@ if __name__ == '__main__':
 	parser.add_argument('--train_entity', action='store_true')
 	parser.add_argument('--learning_rate', default='0.001', type=float)
 	args = parser.parse_args()
-
-	embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
-
+	
+	if 'tticoin' in args.embeddings:
+		embeddings, word2idx = word_embeddings.load_word_emb_miwa(args.embedding)
+	else:
+		embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
+	
 	model_name = args.model_name
 	mode = args.mode
 	data_path = args.data_path
