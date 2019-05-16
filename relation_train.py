@@ -106,7 +106,7 @@ if __name__ == '__main__':
 	parser.add_argument('--learning_rate', default='0.001', type=float)
 	args = parser.parse_args()
 	
-	if 'tticoin' in args.embeddings:
+	if 'tticoin' in args.embedding:
 		embeddings, word2idx = word_embeddings.load_word_emb_miwa(args.embedding)
 	else:
 		embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)

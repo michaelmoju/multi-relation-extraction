@@ -204,7 +204,7 @@ if __name__ == '__main__':
 	mode = args.mode
 	model_name = args.model_name
 	data_path = args.data_path
-	if 'tticoin' in args.embeddings:
+	if 'tticoin' in args.embedding:
 		embeddings, word2idx = word_embeddings.load_word_emb_miwa(args.embedding)
 	else:
 		embeddings, word2idx = word_embeddings.load_word_emb(args.embedding)
