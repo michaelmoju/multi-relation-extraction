@@ -4,6 +4,8 @@ import os
 from miwaIO.sentence import Token, Sentence
 from miwaIO.annotation import *
 
+special_tokens = {"-DQS-": "``", "-DQE-": "''", "-LRB-": "(", "-RRB-": ")", "-COMMA-": ",", "-COLON-": ":",
+				  "-SEMICOLON-": ";", "-PERIOD-": ".", "-DOLLAR-": "$", "-PERCENT-": "%"}
 
 def read_so(fh):
 	out_sents = []
@@ -21,7 +23,11 @@ def read_so(fh):
 				mySent = Sentence(start, end, id[4:-1], os.path.basename(f.name))
 			elif len(data) == 7:
 				start, end, _, id, word, _, _ = data
-				myToken = Token(start, end, id[4:-1], word[6:-1])
+				word = word[6:-1]
+				for special_token in special_tokens.keys():
+					if special_token in word:
+						word = re.sub(special_token, special_tokens[special_token], word)
+				myToken = Token(start, end, id[4:-1], word)
 				mySent.append_token(myToken)
 			else:
 				print("len(data):{}".format(len(data)))
@@ -81,9 +87,3 @@ if __name__ == '__main__':
 	entity_mentions, relation_mentions = read_annot("/media/moju/data/work/resource/data/ace-2005/miwa2016/corpus/dev/AFP_ENG_20030327.0224.split.ann")
 
 	check_no_nested_entity_mentions(entity_mentions, "AFP_ENG_20030327.0224.split.ann")
-
-
-
-
-
-

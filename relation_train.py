@@ -137,8 +137,7 @@ if __name__ == '__main__':
 		
 		elif 'LSTMtype' in model_name:
 			to_indices = my_models.r_to_indices_typed_e
-			eType_embeddings = load_eType_embeddings()
-			model = my_models.model_relation_LSTMtype(embeddings, eType_embeddings)
+			model = my_models.model_relation_LSTMtype(embeddings)
 
 		elif 'multi' in model_name:
 			entity_model = models.load_model(args.entity_folder + "model_entity" + "-" + args.metadata + ".kerasmodel")

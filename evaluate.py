@@ -11,8 +11,9 @@ p = my_models.p
 
 
 def write_to_file(fh, instance, yhat, true_class):
-	fh.write("relationID: " + instance.sentence.docID + '-' + instance.sentence.id + '\n')
-	fh.write("Sentence:{}".format(instance.sentence.to_words()) + '\n')
+	sentenceID = instance.sentence.docID + '-' + instance.sentence.id
+	fh.write("sentenceID: " + sentenceID + '\n')
+	fh.write("Sentence:{}".format(instance.sentence.to_string()) + '\n')
 	fh.write("mention1:{}".format(instance.e1) + '\n')
 	fh.write("mention2:{}".format(instance.e2) + '\n')
 	fh.write("predict: " + yhat + '\n')
@@ -227,7 +228,6 @@ if __name__ == '__main__':
 			to_indices = my_models.r_to_indices_position_e
 		
 		elif 'LSTMtype' in model_name:
-			eType_embeddings = load_eType_embeddings()
 			to_indices = my_models.r_to_indices_typed_e
 		
 		elif 'multi' in model_name:
